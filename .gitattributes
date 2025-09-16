@@ -1,0 +1,18 @@
+* text=auto
+
+# Padronize LF no repo para arquivos de código
+*.py   text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini  text eol=lf
+
+# Arquivos Windows que podem ficar CRLF no checkout
+*.bat  text eol=crlf
+*.ps1  text eol=crlf

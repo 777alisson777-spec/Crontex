@@ -1,0 +1,27 @@
+# venv (use o do projeto; se estiver fora, ignore no repo pai)
+.venv/
+
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Segredos e env local
+.env
+.env.*.local
+
+# Banco local
+db.sqlite3
+
+# Static/media (se gerar localmente)
+staticfiles/
+media/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Sistema
+.DS_Store
+Thumbs.db
