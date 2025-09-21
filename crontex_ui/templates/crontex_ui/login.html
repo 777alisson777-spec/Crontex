@@ -1,0 +1,42 @@
+
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entrar • CRONTEX</title>
+  <link rel="stylesheet" href="{% static 'css/crontex.css' %}">
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="{% static 'img/logo.jpeg' %}" alt="CRONTEX" />
+    <h1 class="brand">CRONTEX</h1>
+    <form method="post" action="{% url 'crontex_ui:logout' %}">{% csrf_token %}
+      <div class="input" style="margin-bottom:12px">
+        <span>📧</span>
+        <input type="email" name="username" placeholder="Digite seu e-mail" required>
+      </div>
+      <div class="input" style="margin-bottom:14px">
+        <span>🔒</span>
+        <input type="password" name="password" placeholder="Digite sua senha" required>
+      </div>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+
+    <div class="row">
+      <a class="inline" href="{% url 'signup' %}">Criar conta</a>
+      <a class="inline" href="{% url 'password_reset' %}">Esqueci minha senha</a>
+    </div>
+
+    <div class="hr" style="margin:18px 0">ou entre com</div>
+    <button class="btn-oauth">🟦 Google</button>
+    <div style="height:10px"></div>
+    <button class="btn-oauth">🟦 Facebook</button>
+    <div style="height:10px"></div>
+    <button class="btn-oauth"> Apple</button>
+
+    <p class="footer-note">Ao continuar você concorda com os termos e política de privacidade.</p>
+  </div>
+</body>
+</html>

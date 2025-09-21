@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
+from typing import cast
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,7 +20,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crontex_ui',
 ]
+
+LOGIN_URL = "/entrar/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/entrar/"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -53,12 +59,12 @@ WSGI_APPLICATION = 'crontex.wsgi.application'
 
 # Database
 # mantém o SQLite local
-# ---- Database por URL, com fallback para SQLite ----
+# ---- Database por URL, com fallback para SQLite ----db_url: str = cast(str, config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"))
+db_url: str = cast(str, config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"))
+db_url: str = cast(str, config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"))
+
 DATABASES = {
-    "default": dj_database_url.parse(
-        config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-        conn_max_age=600,
-    )
+    "default": dj_database_url.parse(db_url, conn_max_age=600),
 }
 
 
