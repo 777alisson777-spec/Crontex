@@ -1,0 +1,88 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Criar conta — CRONTEX</title>
+  <style>
+    :root { --brand:#0b2440; --ring:#d1d5db; --muted:#6b7280; }
+    .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px;background:#f3f4f6}
+    .card{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+    .logo{display:grid;place-items:center;margin:8px 0 16px}
+    .logo img{width:120px;height:auto}
+    h1{font-size:28px;line-height:1;margin:0 0 6px;text-align:center;color:var(--brand)}
+    form{display:grid;gap:12px}
+    .field{display:grid;gap:6px}
+    label{font-weight:600;font-size:14px}
+    .input{display:flex;align-items:center;border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
+    .input svg{width:20px;height:20px;color:var(--brand)}
+    .input input{border:0;outline:0;width:100%;padding:8px 10px;font-size:15px}
+    .btn{width:100%;padding:14px 16px;border-radius:14px;border:none;background:var(--brand);color:#fff;font-weight:600}
+    .row{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:8px 0}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">
+      <img src="{% static 'img/logo.jpeg' %}" alt="CRONTEX">
+      <h1>CRONTEX</h1>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:10px 12px;font-size:14px">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">Usuário</label>
+        <div class="input">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-5.33 0-8 2.67-8 6v1h16v-1c0-3.33-2.67-6-8-6Z" fill="currentColor"/></svg>
+          {{ form.username }}
+        </div>
+        {% if form.username.errors %}<div style="font-size:12px;color:#b91c1c">{{ form.username.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}">E-mail</label>
+        <div class="input">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 3.2-8 4.8-8-4.8V8l8 4.8L20 8v1.2Z" fill="currentColor"/></svg>
+          {{ form.email }}
+        </div>
+        {% if form.email.errors %}<div style="font-size:12px;color:#b91c1c">{{ form.email.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.password1.id_for_label }}">Senha</label>
+        <div class="input">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M17 10h-1V7a4 4 0 0 0-8 0v3H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Zm-6 0V7a3 3 0 1 1 6 0v3h-6Z" fill="currentColor"/></svg>
+          {{ form.password1 }}
+        </div>
+        {% if form.password1.errors %}<div style="font-size:12px;color:#b91c1c">{{ form.password1.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.password2.id_for_label }}">Confirmar senha</label>
+        <div class="input">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M17 10h-1V7a4 4 0 0 0-8 0v3H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Z" fill="currentColor"/></svg>
+          {{ form.password2 }}
+        </div>
+        {% if form.password2.errors %}<div style="font-size:12px;color:#b91c1c">{{ form.password2.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <button class="btn" type="submit">Criar conta</button>
+    </form>
+
+    <div class="row">
+      <a href="{% url 'crontex_ui:login' %}">Entrar</a>
+      <a href="{% url 'crontex_ui:password_reset' %}">Esqueci minha senha</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
