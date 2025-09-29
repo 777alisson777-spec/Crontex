@@ -1,0 +1,46 @@
+/* Topbar */
+.nav{ position:sticky; top:0; height:64px; z-index:20;
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  background:rgba(255,255,255,.85); border-bottom:1px solid var(--c-line)
+}
+.nav-inner{ max-width:1100px; margin:0 auto; display:flex; align-items:center; gap:18px; padding:12px 18px }
+.badge{ padding:4px 10px; border-radius:999px; background:var(--c-orange); color:#0a1a2f; font-weight:800; font-size:12px }
+
+/* Sidebar */
+.sidebar{ position:fixed; top:64px; bottom:0; width:240px; z-index:10;
+  border-right:1px solid var(--c-line); background:#fff; padding:16px
+}
+.side-link{ display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:12px; color:var(--c-text); text-decoration:none; font-weight:600 }
+.side-link.active, .side-link:hover{ background:#e9f1ff; color:var(--c-navy-dark) }
+
+/* Main container */
+.main{
+  max-width:1100px; margin:0 auto; padding:22px;
+  padding-left:262px;  /* 240 sidebar + 22 padding */
+}
+
+/* KPIs */
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px }
+.kpi{ background:#fff; border:1px solid var(--c-line); border-radius:16px; padding:16px; box-shadow:var(--shadow) }
+.kpi .value{ font-size:28px; font-weight:800; color:var(--c-navy-dark) }
+.kpi .label{ color:#7b8896; font-weight:600 }
+.kpi .trend.up{ color:var(--c-orange) }
+.kpi .trend.down{ color:var(--c-red) }
+
+/* Tabela */
+.table{ width:100%; border-collapse:collapse; background:#fff; border-radius:16px; overflow:hidden; box-shadow:var(--shadow) }
+.table th, .table td{ padding:12px 14px; border-bottom:1px solid var(--c-line); text-align:left }
+.table th{ background:#f5f8ff; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#4f5d78 }
+.status{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px }
+.status.ok{ background:#e8f6ee; color:#16794b }
+.status.late{ background:#fff1e0; color:#8a4b00 }
+.status.blocked{ background:#ffe9e7; color:#a1221b }
+
+/* Responsivo */
+@media (max-width:1200px){ .kpi-grid{ grid-template-columns:repeat(3,minmax(0,1fr)) } }
+@media (max-width:900px){ .kpi-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) } }
+@media (max-width:600px){
+  .sidebar{ position:static; width:auto; border-right:0 }
+  .main{ padding-left:22px }
+  .kpi-grid{ grid-template-columns:1fr }
+}

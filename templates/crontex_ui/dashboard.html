@@ -1,0 +1,70 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Dashboard • CRONTEX{% endblock %}
+{% block nav_overview %}active{% endblock %}
+
+{% block content %}
+<section class="kpi-grid">
+  <div class="kpi">
+    <div class="label">Pedidos hoje</div>
+    <div class="value">128 <span class="trend up">▲ +12%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Faturamento</div>
+    <div class="value">R$ 32.450 <span class="trend up">▲ +8%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Produção</div>
+    <div class="value">2.310 peças <span class="trend down">▼ -3%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Atrasos</div>
+    <div class="value">7 ordens</div>
+  </div>
+</section>
+
+<div style="height:18px"></div>
+
+<section>
+  <h2 style="margin-bottom:12px">Ordens recentes</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nº OP</th>
+        <th>Produto</th>
+        <th>Cliente</th>
+        <th>Qtde</th>
+        <th>Prazo</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OP-4021</td>
+        <td>Camiseta Tech</td>
+        <td>Alpha</td>
+        <td>500</td>
+        <td>20/09</td>
+        <td><span class="status ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>OP-4022</td>
+        <td>Moletom Zip</td>
+        <td>Beta</td>
+        <td>300</td>
+        <td>21/09</td>
+        <td><span class="status late">Atenção</span></td>
+      </tr>
+      <tr>
+        <td>OP-4023</td>
+        <td>Legging Pro</td>
+        <td>Gamma</td>
+        <td>1500</td>
+        <td>22/09</td>
+        <td><span class="status blocked">Bloqueado</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}
