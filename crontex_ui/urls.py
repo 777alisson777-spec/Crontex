@@ -3,7 +3,8 @@ from .views import (
     AppLoginView, AppLogoutView, AppSignupView,
     AppPasswordResetView, AppPasswordResetDoneView,
     AppPasswordResetConfirmView, AppPasswordResetCompleteView,
-    AppPasswordChangeView, AppPasswordChangeDoneView, DashboardView
+    AppPasswordChangeView, AppPasswordChangeDoneView, DashboardView,
+    
 )
 
 app_name = "crontex_ui"

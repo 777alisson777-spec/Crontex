@@ -9,6 +9,7 @@ from django.views.generic import CreateView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
+from django.utils import timezone
 
 
 class AppLoginView(LoginView):
@@ -56,17 +57,23 @@ class AppPasswordChangeDoneView(PasswordChangeDoneView):
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "crontex_ui/dashboard.html"
-    login_url = "/entrar/"
 
     def get_context_data(self, **kwargs):
+        from catalog.models import Produto  # import local evita ciclos
         context = super().get_context_data(**kwargs)
-        # mock de KPIs, depois trocar por queries ORM
-        context["kpis"] = [
-            {"label": "Pedidos", "value": 120, "trend": "up"},
-            {"label": "Clientes", "value": 35, "trend": "up"},
-            {"label": "Produtos ativos", "value": 87, "trend": "down"},
-            {"label": "Receita", "value": "R$ 12.450", "trend": "up"},
-        ]
+
+        # KPIs reais de Produto
+        context["kpi_produtos_ativos"] = Produto.objects.filter(ativo=True).count()
+        context["kpi_produtos_total"] = Produto.objects.count()
+
+        # Últimos 6 produtos criados/atualizados
+        context["produtos_recentes"] = (
+            Produto.objects
+            .order_by("-atualizado_em", "-criado_em")
+            .only("id", "nome", "sku", "preco", "estoque", "ativo", "imagem", "atualizado_em")[:6]
+        )
         return context
+    
+
 
 

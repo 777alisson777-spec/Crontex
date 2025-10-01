@@ -15,7 +15,6 @@
   <div class="nav">
     <div class="nav-inner">
       <img src="{% static 'img/logo.jpeg' %}" style="width:40px;height:40px;border-radius:12px" alt="logo">
-      <strong style="font-size:20px; letter-spacing:.3px; color:var(--c-navy-dark)">CRONTEX</strong>
       <span class="badge">Admin</span>
       <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
         <span class="muted">Olá, {{ request.user.first_name|default:request.user.username }}</span>
@@ -35,7 +34,7 @@
             Visão geral
         </a>
         <a class="side-link" href="#">Pedidos</a>
-        <a class="side-link" href="#">Produtos</a>
+        <a class="side-link" href="{% url 'catalog:produto_list' %}">Produtos</a>
         <a class="side-link" href="#">Clientes</a>
         <a class="side-link" href="#">PCP</a>
         <a class="side-link" href="#">Relatórios</a>

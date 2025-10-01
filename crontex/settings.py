@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crontex_ui',
+    "catalog",
 ]
 
 LOGIN_URL = "/entrar/"

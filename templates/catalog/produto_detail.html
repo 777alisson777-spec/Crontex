@@ -1,0 +1,21 @@
+{% extends "base_app.html" %}
+{% block title %}{{ object.nome }}{% endblock %}
+{% block content %}
+<section class="card kpi" style="padding:16px; display:flex; gap:16px; align-items:flex-start">
+  <div style="width:220px; height:220px; border:1px solid var(--c-line); border-radius:16px; overflow:hidden; background:#fff">
+    {% if object.imagem %}<img src="{{ object.imagem.url }}" alt="{{ object.nome }}" style="width:100%; height:100%; object-fit:cover">{% endif %}
+  </div>
+  <div style="flex:1; min-width:0">
+    <h1 style="margin:0 0 8px">{{ object.nome }}</h1>
+    <div class="muted">SKU {{ object.sku }}</div>
+    <div class="value" style="margin-top:10px">R$ {{ object.preco }}</div>
+    <div class="muted" style="margin-top:4px">Estoque: {{ object.estoque }}</div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+      <a class="btn" href="{% url 'catalog:produto_update' object.pk %}">Editar</a>
+      <a class="side-link" href="{% url 'catalog:produto_delete' object.pk %}">Excluir</a>
+      <a class="side-link" href="{% url 'catalog:produto_list' %}">Voltar</a>
+      {% if object.ativo %}<span class="status ok">Ativo</span>{% else %}<span class="status blocked">Inativo</span>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

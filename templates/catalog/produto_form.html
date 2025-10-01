@@ -1,0 +1,34 @@
+{% extends "base_app.html" %}
+{% block title %}{{ view.object|default:"Novo produto" }}{% endblock %}
+
+{% block content %}
+<section class="kpi" style="padding:16px; max-width:720px">
+  <h1 style="margin:0 0 14px">{{ view.object|default:"Novo produto" }}</h1>
+
+  <form method="post" enctype="multipart/form-data" style="display:grid; gap:12px">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="input">{{ form.nome }}</div>
+    <div class="input">{{ form.sku }}</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+      <div class="input">{{ form.preco }}</div>
+      <div class="input">{{ form.estoque }}</div>
+    </div>
+
+    <label style="display:flex; align-items:center; gap:8px">
+      {{ form.ativo }} <span>Ativo</span>
+    </label>
+
+    <div class="input" style="height:auto; padding:10px 14px">
+      {{ form.imagem }} <span class="muted" style="margin-left:8px">Imagem (opcional)</span>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:6px">
+      <button class="btn btn-lg" type="submit">Salvar</button>
+      <a class="side-link" href="{% url 'catalog:produto_list' %}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
