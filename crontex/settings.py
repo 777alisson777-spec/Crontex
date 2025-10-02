@@ -14,6 +14,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv(
 # Application definition
 
 INSTALLED_APPS = [
+    "accounts",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -22,7 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crontex_ui',
     "catalog",
+     
 ]
+
 
 LOGIN_URL = "/entrar/"
 LOGIN_REDIRECT_URL = "/"
@@ -36,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "accounts.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'crontex.urls'
@@ -103,9 +107,9 @@ ALLOWED_HOSTS = []  # durante dev, vazio funciona no localhost
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "crontex_ui" / "static"]  # só o design system global
+STATIC_ROOT = BASE_DIR / "staticfiles"                   # saída do collectstatic
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 

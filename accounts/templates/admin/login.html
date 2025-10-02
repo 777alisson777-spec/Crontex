@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}CRONTEX · Admin{% endblock %}
+{% block bodyclass %}login crontex-admin{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'crontex/css/core.css' %}">
+  <link rel="stylesheet" href="{% static 'crontex/css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'crontex/css/admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+  <div class="branding" style="margin:16px 0;">
+    <a href="/global/">
+      <img src="{% static 'crontex/img/logo.jpeg' %}" alt="Crontex" />
+      <span>CRONTEX teste · Admin</span>
+    </a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div id="container" style="max-width:420px;margin:24px auto;">
+    {% if form.errors and not form.non_field_errors %}
+      <ul class="messagelist"><li class="error">{% trans "Please enter the correct username and password." %}</li></ul>
+    {% endif %}
+    {% if form.non_field_errors %}
+      <ul class="messagelist">
+        {% for error in form.non_field_errors %}
+          <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form" class="form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next|default:'/global/' }}">
+      <fieldset class="module aligned">
+        <div class="form-row">
+          <label for="{{ form.username.id_for_label }}">{% trans 'Username' %}</label>
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+        <div class="form-row">
+          <label for="{{ form.password.id_for_label }}">{% trans 'Password' %}</label>
+          {{ form.password }}
+          {{ form.password.errors }}
+        </div>
+      </fieldset>
+      <div class="submit-row" style="margin-top:16px;">
+        <input type="submit" value="{% trans 'Log in' %}" />
+      </div>
+    </form>
+
+    {% if site_url %}
+      <p style="margin-top:12px;"><a href="{{ site_url }}">{% trans 'Return to site' %}</a></p>
+    {% endif %}
+  </div>
+{% endblock %}

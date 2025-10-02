@@ -1,0 +1,41 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Nova Account{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Criar Account</h1>
+  <form method="post" class="form">
+    {% csrf_token %}
+    <div class="form-grid">
+      {{ form.non_field_errors }}
+      <div class="form-row">
+        <label>Nome</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+      <div class="form-row">
+        <label>Slug</label>
+        {{ form.slug }}
+        <small class="hint">ex.: patrickhf</small>
+        {{ form.slug.errors }}
+      </div>
+      <div class="form-row">
+        <label>Plano</label>
+        {{ form.plan }}
+        {{ form.plan.errors }}
+      </div>
+      <div class="form-row">
+        <label>Status</label>
+        {{ form.is_active }}
+        {{ form.is_active.errors }}
+      </div>
+    </div>
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn" type="submit">Criar</button>
+      <a class="btn" href="{% url 'accounts:account_list' %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

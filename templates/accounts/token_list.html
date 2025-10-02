@@ -1,0 +1,63 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Tokens de Serviço{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Tokens de Serviço</h1>
+
+  <form method="get" class="form-inline" style="margin-bottom:12px;">
+    {{ form.q }}
+    {{ form.is_active }}
+    {{ form.account }}
+    <button class="btn" type="submit">Filtrar</button>
+    <a class="btn" href="{% url 'accounts:token_create' %}">Novo token</a>
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Escopo</th>
+        <th>Status</th>
+        <th>Criado</th>
+        <th>Último uso</th>
+        <th style="width:1%;">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tokens %}
+        <tr>
+          <td>{{ t.name }}</td>
+          <td>{% if t.account %}{{ t.account.name }}{% else %}Global{% endif %}</td>
+          <td>{% if t.is_active %}Ativo{% else %}Inativo{% endif %}</td>
+          <td>{{ t.created_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if t.last_used_at %}{{ t.last_used_at|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+          </td>
+          <td>
+            <a class="btn" href="{% url 'accounts:token_update' t.id %}">Editar</a>
+            {% if t.is_active %}
+              <form method="post" action="{% url 'accounts:token_rotate' t.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn" onclick="return confirm('Rotacionar chave?')">Rotacionar</button>
+              </form>
+              <form method="post" action="{% url 'accounts:token_deactivate' t.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn" onclick="return confirm('Desativar token?')">Desativar</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Nenhum token.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="actions" style="margin-top:16px;">
+    <a class="side-link" href="{% url 'accounts:global_dashboard' %}">Voltar ao Dashboard Global</a>
+  </div>
+</div>
+{% endblock %}

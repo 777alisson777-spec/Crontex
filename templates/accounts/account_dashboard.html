@@ -1,0 +1,33 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Dashboard da Conta{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Dashboard — {{ account.name }}</h1>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">Membros</div>
+      <div class="card-value">{{ members_total }}</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:16px;">Membros por papel</h2>
+  <table class="table">
+    <thead><tr><th>Papel</th><th>Qtd</th></tr></thead>
+    <tbody>
+      {% for row in members_by_role %}
+        <tr><td>{{ row.role }}</td><td>{{ row.qty }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">Sem dados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="actions" style="margin-top:16px;">
+    <a class="side-link" href="{% url 'accounts:member_list' %}?account={{ account.slug }}">Gerenciar membros</a>
+  </div>
+</div>
+{% endblock %}

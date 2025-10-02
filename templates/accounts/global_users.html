@@ -1,0 +1,68 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Usuários Globais{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Usuários Globais</h1>
+
+  <form method="get" class="form-inline" style="margin-bottom:12px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="username ou email">
+    <label><input type="checkbox" name="is_staff" value="1" {% if flt_staff %}checked{% endif %}> Staff</label>
+    <label><input type="checkbox" name="is_superuser" value="1" {% if flt_super %}checked{% endif %}> Superuser</label>
+    <label><input type="checkbox" name="active" value="1" {% if flt_active %}checked{% endif %}> Ativo</label>
+    <button class="btn" type="submit">Filtrar</button>
+    {% if can_write %}
+      <a class="btn" href="{% url 'accounts:global_user_create' %}">Novo usuário</a>
+    {% endif %}
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Staff</th>
+        <th>Superuser</th>
+        <th>Ativo</th>
+        <th>Último login</th>
+        <th>Desde</th>
+        <th style="width:1%;">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td>{% if u.is_staff %}Sim{% else %}Não{% endif %}</td>
+          <td>{% if u.is_superuser %}Sim{% else %}Não{% endif %}</td>
+          <td>{% if u.is_active %}Sim{% else %}Não{% endif %}</td>
+          <td>{{ u.last_login|date:"d/m/Y H:i" }}</td>
+          <td>{{ u.date_joined|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if can_write %}
+              <a class="btn" href="{% url 'accounts:global_user_update' u.id %}">Editar</a>
+              {% if u.is_active %}
+                <form method="post" action="{% url 'accounts:global_user_deactivate' u.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button class="btn" onclick="return confirm('Desativar {{ u.username }}?')">Desativar</button>
+                </form>
+              {% endif %}
+            {% else %}
+              <span class="muted">read-only</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8">Nenhum usuário encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="actions" style="margin-top:16px;">
+    <a class="side-link" href="{% url 'accounts:global_dashboard' %}">Voltar ao Dashboard Global</a>
+  </div>
+</div>
+{% endblock %}
