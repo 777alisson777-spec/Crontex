@@ -1,0 +1,142 @@
+/* ====== Layout base ====== */
+.container {
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+/* Grid utilitária */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.grid .col-span-2 { grid-column: span 2; }
+
+/* ====== Form controls ====== */
+.input,
+input[type="text"],
+input[type="number"],
+input[type="url"],
+input[type="search"],
+input[type="file"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  outline: none;
+  font: inherit;
+  box-sizing: border-box;
+}
+.input:focus,
+textarea:focus,
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* Labels compactos */
+label {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ====== Botões ====== */
+.btn,
+button.btn,
+input[type="submit"].btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Botão secundário (se precisar) */
+.btn.secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* ====== Tabelas ====== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  box-sizing: border-box;
+}
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+.table thead th {
+  background: #f9fafb;
+  font-weight: 700;
+}
+
+/* ====== Paginação ====== */
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+.pagination a {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #111827;
+}
+.pagination a:hover { background: #f9fafb; }
+
+/* ====== Alerts (Django messages) ====== */
+.alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 8px 0 16px;
+  border: 1px solid transparent;
+}
+.alert.info    { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.alert.success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.alert.warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.alert.error   { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+/* ====== Tipografia ====== */
+h1 {
+  font-size: 22px;
+  margin: 8px 0 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ====== Utilitários ====== */
+.mb-4 { margin-bottom: 16px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+
+/* ====== Responsivo ====== */
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+  .grid .col-span-2 { grid-column: span 1; }
+  .container { padding: 0 12px; }
+  .table th, .table td { padding: 8px 10px; }
+}

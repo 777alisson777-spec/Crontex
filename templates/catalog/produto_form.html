@@ -1,34 +1,70 @@
 {% extends "base_app.html" %}
-{% block title %}{{ view.object|default:"Novo produto" }}{% endblock %}
+{% load static %}
+{% block title %}{{ form.instance.pk|yesno:"Editar produto,Novo produto" }}{% endblock %}
 
 {% block content %}
-<section class="kpi" style="padding:16px; max-width:720px">
-  <h1 style="margin:0 0 14px">{{ view.object|default:"Novo produto" }}</h1>
+<div class="container">
+  <div class="card">
+    <div class="card-title">{{ form.instance.pk|yesno:"Editar produto,Novo produto" }}</div>
 
-  <form method="post" enctype="multipart/form-data" style="display:grid; gap:12px">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+    <form method="post" style="margin-top:12px;">{% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="grid">
+        <div>{{ form.external_id.label_tag }} {{ form.external_id }}</div>
+        <div>{{ form.sku.label_tag }} {{ form.sku }}</div>
+        <div class="col-span-2">{{ form.name.label_tag }} {{ form.name }}</div>
+        <div>{{ form.unit.label_tag }} {{ form.unit }}</div>
+        <div>{{ form.ncm.label_tag }} {{ form.ncm }}</div>
+        <div>{{ form.origin.label_tag }} {{ form.origin }}</div>
 
-    <div class="input">{{ form.nome }}</div>
-    <div class="input">{{ form.sku }}</div>
+        <div>{{ form.price.label_tag }} {{ form.price }}</div>
+        <div>{{ form.cost_price.label_tag }} {{ form.cost_price }}</div>
+        <div>{{ form.purchase_price.label_tag }} {{ form.purchase_price }}</div>
+        <div>{{ form.stock_qty.label_tag }} {{ form.stock_qty }}</div>
+        <div>{{ form.status.label_tag }} {{ form.status }}</div>
+        <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
-      <div class="input">{{ form.preco }}</div>
-      <div class="input">{{ form.estoque }}</div>
-    </div>
+        <div>{{ form.ipi_fixed.label_tag }} {{ form.ipi_fixed }}</div>
+        <div>{{ form.icms_st_base_retencao.label_tag }} {{ form.icms_st_base_retencao }}</div>
+        <div>{{ form.icms_st_valor_retencao.label_tag }} {{ form.icms_st_valor_retencao }}</div>
+        <div>{{ form.icms_proprio_substituto.label_tag }} {{ form.icms_proprio_substituto }}</div>
 
-    <label style="display:flex; align-items:center; gap:8px">
-      {{ form.ativo }} <span>Ativo</span>
-    </label>
+        <div>{{ form.product_category.label_tag }} {{ form.product_category }}</div>
+        <div>{{ form.department.label_tag }} {{ form.department }}</div>
+        <div>{{ form.brand.label_tag }} {{ form.brand }}</div>
+        <div>{{ form.unit_of_measure.label_tag }} {{ form.unit_of_measure }}</div>
 
-    <div class="input" style="height:auto; padding:10px 14px">
-      {{ form.imagem }} <span class="muted" style="margin-left:8px">Imagem (opcional)</span>
-    </div>
+        <div>{{ form.gtin.label_tag }} {{ form.gtin }}</div>
+        <div>{{ form.cest.label_tag }} {{ form.cest }}</div>
 
-    <div style="display:flex; gap:10px; margin-top:6px">
-      <button class="btn btn-lg" type="submit">Salvar</button>
-      <a class="side-link" href="{% url 'catalog:produto_list' %}">Cancelar</a>
-    </div>
-  </form>
-</section>
+        <div>{{ form.width_cm.label_tag }} {{ form.width_cm }}</div>
+        <div>{{ form.height_cm.label_tag }} {{ form.height_cm }}</div>
+        <div>{{ form.length_cm.label_tag }} {{ form.length_cm }}</div>
+        <div>{{ form.weight_net.label_tag }} {{ form.weight_net }}</div>
+        <div>{{ form.weight_gross.label_tag }} {{ form.weight_gross }}</div>
+
+        <div class="col-span-2">{{ form.external_link.label_tag }} {{ form.external_link }}</div>
+        <div>{{ form.warranty_months_supplier.label_tag }} {{ form.warranty_months_supplier }}</div>
+        <div>{{ form.clone_from_parent.label_tag }} {{ form.clone_from_parent }}</div>
+        <div>{{ form.product_condition.label_tag }} {{ form.product_condition }}</div>
+        <div>{{ form.free_shipping.label_tag }} {{ form.free_shipping }}</div>
+        <div>{{ form.fci_number.label_tag }} {{ form.fci_number }}</div>
+        <div class="col-span-2">{{ form.video_url.label_tag }} {{ form.video_url }}</div>
+
+        <div class="col-span-2">{{ form.notes.label_tag }} {{ form.notes }}</div>
+        <div class="col-span-2">{{ form.extra_info.label_tag }} {{ form.extra_info }}</div>
+        <div class="col-span-2">{{ form.bling_extra.label_tag }} {{ form.bling_extra }}</div>
+
+        <div>{{ form.supplier_code.label_tag }} {{ form.supplier_code }}</div>
+        <div>{{ form.supplier_name.label_tag }} {{ form.supplier_name }}</div>
+        <div class="col-span-2">{{ form.location.label_tag }} {{ form.location }}</div>
+      </div>
+
+      <div class="actions" style="margin-top:16px; display:flex; gap:8px;">
+        <button class="btn" type="submit">Salvar</button>
+        <a class="btn secondary" href="{% url 'catalog:produto_list' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

@@ -1,21 +1,70 @@
 {% extends "base_app.html" %}
-{% block title %}{{ object.nome }}{% endblock %}
+{% load static %}
+{% block title %}{{ object.sku }} — {{ object.name }}{% endblock %}
+
 {% block content %}
-<section class="card kpi" style="padding:16px; display:flex; gap:16px; align-items:flex-start">
-  <div style="width:220px; height:220px; border:1px solid var(--c-line); border-radius:16px; overflow:hidden; background:#fff">
-    {% if object.imagem %}<img src="{{ object.imagem.url }}" alt="{{ object.nome }}" style="width:100%; height:100%; object-fit:cover">{% endif %}
-  </div>
-  <div style="flex:1; min-width:0">
-    <h1 style="margin:0 0 8px">{{ object.nome }}</h1>
-    <div class="muted">SKU {{ object.sku }}</div>
-    <div class="value" style="margin-top:10px">R$ {{ object.preco }}</div>
-    <div class="muted" style="margin-top:4px">Estoque: {{ object.estoque }}</div>
-    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+<div class="container">
+  <div class="card">
+    <div class="card-title">{{ object.sku }} — {{ object.name }}</div>
+
+    <table class="table" style="margin-top:12px;">
+      <tbody>
+        <tr><th>Código</th><td>{{ object.sku }}</td></tr>
+        <tr><th>Descrição</th><td>{{ object.name }}</td></tr>
+        <tr><th>Unidade</th><td>{{ object.unit }}</td></tr>
+        <tr><th>NCM</th><td>{{ object.ncm }}</td></tr>
+        <tr><th>Origem</th><td>{{ object.origin }}</td></tr>
+        <tr><th>Situação</th><td>{{ object.status }}</td></tr>
+
+        <tr><th>Preço</th><td>{{ object.price }}</td></tr>
+        <tr><th>Preço de custo</th><td>{{ object.cost_price }}</td></tr>
+        <tr><th>Preço de compra</th><td>{{ object.purchase_price }}</td></tr>
+        <tr><th>Estoque</th><td>{{ object.stock_qty }}</td></tr>
+
+        <tr><th>GTIN/EAN</th><td>{{ object.gtin }}</td></tr>
+        <tr><th>CEST</th><td>{{ object.cest }}</td></tr>
+        <tr><th>Marca</th><td>{{ object.brand }}</td></tr>
+        <tr><th>Categoria</th><td>{{ object.product_category }}</td></tr>
+        <tr><th>Departamento</th><td>{{ object.department }}</td></tr>
+        <tr><th>Unidade de medida</th><td>{{ object.unit_of_measure }}</td></tr>
+
+        <tr><th>Peso líquido (kg)</th><td>{{ object.weight_net }}</td></tr>
+        <tr><th>Peso bruto (kg)</th><td>{{ object.weight_gross }}</td></tr>
+        <tr><th>Largura (cm)</th><td>{{ object.width_cm }}</td></tr>
+        <tr><th>Altura (cm)</th><td>{{ object.height_cm }}</td></tr>
+        <tr><th>Profundidade (cm)</th><td>{{ object.length_cm }}</td></tr>
+
+        <tr><th>Valor IPI fixo</th><td>{{ object.ipi_fixed }}</td></tr>
+        <tr><th>ICMS ST base (ret.)</th><td>{{ object.icms_st_base_retencao }}</td></tr>
+        <tr><th>ICMS ST valor (ret.)</th><td>{{ object.icms_st_valor_retencao }}</td></tr>
+        <tr><th>ICMS próprio substituto</th><td>{{ object.icms_proprio_substituto }}</td></tr>
+
+        <tr><th>Link Externo</th><td>{% if object.external_link %}<a class="side-link" href="{{ object.external_link }}" target="_blank" rel="noopener">abrir</a>{% endif %}</td></tr>
+        <tr><th>Vídeo</th><td>{% if object.video_url %}<a class="side-link" href="{{ object.video_url }}" target="_blank" rel="noopener">abrir</a>{% endif %}</td></tr>
+        <tr><th>Garantia fornecedor (meses)</th><td>{{ object.warranty_months_supplier }}</td></tr>
+        <tr><th>Frete grátis</th><td>{{ object.free_shipping|yesno:"Sim,Não" }}</td></tr>
+        <tr><th>Clonar do pai</th><td>{{ object.clone_from_parent|yesno:"Sim,Não" }}</td></tr>
+        <tr><th>Número FCI</th><td>{{ object.fci_number }}</td></tr>
+
+        <tr><th>Observações</th><td>{{ object.notes|linebreaksbr }}</td></tr>
+        <tr><th>Informações Adicionais</th><td>{{ object.extra_info|linebreaksbr }}</td></tr>
+
+        <tr>
+          <th>Extras Bling (16–45)</th>
+          <td><pre style="white-space:pre-wrap;">{{ object.bling_extra|json_script:"bling_extra_json" }}</pre></td>
+        </tr>
+
+        <tr><th>Ativo</th><td>{{ object.is_active|yesno:"Sim,Não" }}</td></tr>
+        <tr><th>Criado</th><td>{{ object.created_at }}</td></tr>
+        <tr><th>Atualizado</th><td>{{ object.updated_at }}</td></tr>
+      </tbody>
+    </table>
+
+    <div class="actions" style="margin-top:16px; display:flex; gap:8px;">
       <a class="btn" href="{% url 'catalog:produto_update' object.pk %}">Editar</a>
-      <a class="side-link" href="{% url 'catalog:produto_delete' object.pk %}">Excluir</a>
-      <a class="side-link" href="{% url 'catalog:produto_list' %}">Voltar</a>
-      {% if object.ativo %}<span class="status ok">Ativo</span>{% else %}<span class="status blocked">Inativo</span>{% endif %}
+      <a class="btn secondary" href="{% url 'catalog:produto_delete' object.pk %}">Excluir</a>
+      <a class="btn secondary" href="{% url 'catalog:produto_list' %}">Voltar</a>
     </div>
   </div>
-</section>
+</div>
 {% endblock %}
