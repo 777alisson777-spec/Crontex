@@ -1,70 +1,209 @@
 {% extends "base_app.html" %}
 {% load static %}
-{% block title %}{{ object.sku }} — {{ object.name }}{% endblock %}
+{% block title %}Produto — {{ object.sku }}{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="card">
-    <div class="card-title">{{ object.sku }} — {{ object.name }}</div>
+    <div class="card-title">Produto — {{ object.name }} <small style="font-weight:400;color:#64748b">({{ object.sku }})</small></div>
 
-    <table class="table" style="margin-top:12px;">
-      <tbody>
-        <tr><th>Código</th><td>{{ object.sku }}</td></tr>
-        <tr><th>Descrição</th><td>{{ object.name }}</td></tr>
-        <tr><th>Unidade</th><td>{{ object.unit }}</td></tr>
-        <tr><th>NCM</th><td>{{ object.ncm }}</td></tr>
-        <tr><th>Origem</th><td>{{ object.origin }}</td></tr>
-        <tr><th>Situação</th><td>{{ object.status }}</td></tr>
+    <nav class="tabs" role="tablist" aria-label="Abas do produto">
+      <button type="button" class="tab is-active" role="tab" aria-selected="true" tabindex="0" data-tab="pedido">Pedido</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="bling">Bling</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="os">OS</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="manufatura">Manufatura</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="material">Material</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="grade">Grade</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="av-oficina">Aviamentos Oficina</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="av-acab">Aviamentos Acabamento</button>
+    </nav>
 
-        <tr><th>Preço</th><td>{{ object.price }}</td></tr>
-        <tr><th>Preço de custo</th><td>{{ object.cost_price }}</td></tr>
-        <tr><th>Preço de compra</th><td>{{ object.purchase_price }}</td></tr>
-        <tr><th>Estoque</th><td>{{ object.stock_qty }}</td></tr>
+    <div class="tab-panels" id="produto-tab-panels">
+      <!-- ===== PEDIDO ===== -->
+      <section class="tab-panel is-active" role="tabpanel" data-tab="pedido">
+        <div class="grid">
+          <div>
+            <label>Requisitante</label>
+            <div class="input" style="border:none;padding:0">{{ tab_pedido.requisitante|default:"—" }}</div>
+          </div>
+          <div>
+            <label>Cliente</label>
+            <div class="input" style="border:none;padding:0">{{ tab_pedido.cliente|default:"—" }}</div>
+          </div>
+          <div class="col-span-2">
+            <label>Status</label>
+            <div class="input" style="border:none;padding:0">{{ tab_pedido.status|default:"—" }}</div>
+          </div>
+        </div>
+      </section>
 
-        <tr><th>GTIN/EAN</th><td>{{ object.gtin }}</td></tr>
-        <tr><th>CEST</th><td>{{ object.cest }}</td></tr>
-        <tr><th>Marca</th><td>{{ object.brand }}</td></tr>
-        <tr><th>Categoria</th><td>{{ object.product_category }}</td></tr>
-        <tr><th>Departamento</th><td>{{ object.department }}</td></tr>
-        <tr><th>Unidade de medida</th><td>{{ object.unit_of_measure }}</td></tr>
+      <!-- ===== BLING (model) ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="bling" hidden>
+        <div class="grid">
+          <div><label>SKU</label><div class="input" style="border:none;padding:0">{{ object.sku }}</div></div>
+          <div><label>Nome</label><div class="input" style="border:none;padding:0">{{ object.name }}</div></div>
+          <div><label>Categoria</label><div class="input" style="border:none;padding:0">{{ object.product_category|default:"—" }}</div></div>
+          <div><label>Departamento</label><div class="input" style="border:none;padding:0">{{ object.department|default:"—" }}</div></div>
 
-        <tr><th>Peso líquido (kg)</th><td>{{ object.weight_net }}</td></tr>
-        <tr><th>Peso bruto (kg)</th><td>{{ object.weight_gross }}</td></tr>
-        <tr><th>Largura (cm)</th><td>{{ object.width_cm }}</td></tr>
-        <tr><th>Altura (cm)</th><td>{{ object.height_cm }}</td></tr>
-        <tr><th>Profundidade (cm)</th><td>{{ object.length_cm }}</td></tr>
+          <div><label>Preço</label><div class="input" style="border:none;padding:0">{{ object.price|default:"0.00" }}</div></div>
+          <div><label>Custo</label><div class="input" style="border:none;padding:0">{{ object.cost_price|default:"0.00" }}</div></div>
+          <div><label>Compra</label><div class="input" style="border:none;padding:0">{{ object.purchase_price|default:"0.00" }}</div></div>
+          <div><label>Estoque</label><div class="input" style="border:none;padding:0">{{ object.stock_qty|default:"0" }}</div></div>
 
-        <tr><th>Valor IPI fixo</th><td>{{ object.ipi_fixed }}</td></tr>
-        <tr><th>ICMS ST base (ret.)</th><td>{{ object.icms_st_base_retencao }}</td></tr>
-        <tr><th>ICMS ST valor (ret.)</th><td>{{ object.icms_st_valor_retencao }}</td></tr>
-        <tr><th>ICMS próprio substituto</th><td>{{ object.icms_proprio_substituto }}</td></tr>
+          <div><label>NCM</label><div class="input" style="border:none;padding:0">{{ object.ncm|default:"—" }}</div></div>
+          <div><label>CEST</label><div class="input" style="border:none;padding:0">{{ object.cest|default:"—" }}</div></div>
+          <div><label>GTIN</label><div class="input" style="border:none;padding:0">{{ object.gtin|default:"—" }}</div></div>
+          <div><label>IPI Fixo</label><div class="input" style="border:none;padding:0">{{ object.ipi_fixed|default:"0.00" }}</div></div>
 
-        <tr><th>Link Externo</th><td>{% if object.external_link %}<a class="side-link" href="{{ object.external_link }}" target="_blank" rel="noopener">abrir</a>{% endif %}</td></tr>
-        <tr><th>Vídeo</th><td>{% if object.video_url %}<a class="side-link" href="{{ object.video_url }}" target="_blank" rel="noopener">abrir</a>{% endif %}</td></tr>
-        <tr><th>Garantia fornecedor (meses)</th><td>{{ object.warranty_months_supplier }}</td></tr>
-        <tr><th>Frete grátis</th><td>{{ object.free_shipping|yesno:"Sim,Não" }}</td></tr>
-        <tr><th>Clonar do pai</th><td>{{ object.clone_from_parent|yesno:"Sim,Não" }}</td></tr>
-        <tr><th>Número FCI</th><td>{{ object.fci_number }}</td></tr>
+          <div><label>L×A×C (cm)</label>
+            <div class="input" style="border:none;padding:0">
+              {{ object.width_cm|default:"0.00" }} × {{ object.height_cm|default:"0.00" }} × {{ object.length_cm|default:"0.00" }}
+            </div>
+          </div>
+          <div><label>Peso Líq./Bruto (kg)</label>
+            <div class="input" style="border:none;padding:0">
+              {{ object.weight_net|default:"0.000" }} / {{ object.weight_gross|default:"0.000" }}
+            </div>
+          </div>
+          <div><label>Marca</label><div class="input" style="border:none;padding:0">{{ object.brand|default:"—" }}</div></div>
+          <div><label>Unidade</label><div class="input" style="border:none;padding:0">{{ object.unit|default:"UN" }}</div></div>
 
-        <tr><th>Observações</th><td>{{ object.notes|linebreaksbr }}</td></tr>
-        <tr><th>Informações Adicionais</th><td>{{ object.extra_info|linebreaksbr }}</td></tr>
+          <div class="col-span-2"><label>Anotações</label><div class="input" style="border:none;padding:0">{{ object.notes|default:"—" }}</div></div>
+          <div class="col-span-2"><label>Link Externo</label>
+            <div class="input" style="border:none;padding:0">
+              {% if object.external_link %}<a href="{{ object.external_link }}" target="_blank" rel="noopener">{{ object.external_link }}</a>{% else %}—{% endif %}
+            </div>
+          </div>
+          <div><label>Status</label><div class="input" style="border:none;padding:0">{{ object.status|default:"—" }}</div></div>
+          <div><label>Ativo</label><div class="input" style="border:none;padding:0">{{ object.is_active|yesno:"Sim,Não" }}</div></div>
+        </div>
+      </section>
 
-        <tr>
-          <th>Extras Bling (16–45)</th>
-          <td><pre style="white-space:pre-wrap;">{{ object.bling_extra|json_script:"bling_extra_json" }}</pre></td>
-        </tr>
+      <!-- ===== OS ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="os" hidden>
+        <div class="grid">
+          <div><label>Estilo</label><div class="input" style="border:none;padding:0">{{ tab_os.estilo|default:"—" }}</div></div>
+          <div><label>Arte</label><div class="input" style="border:none;padding:0">{{ tab_os.arte|default:"—" }}</div></div>
+          <div><label>Modelagem</label><div class="input" style="border:none;padding:0">{{ tab_os.modelagem|default:"—" }}</div></div>
+          <div><label>Pilotagem</label><div class="input" style="border:none;padding:0">{{ tab_os.pilotagem|default:"—" }}</div></div>
+          <div class="col-span-2"><label>Encaixe</label><div class="input" style="border:none;padding:0">{{ tab_os.encaixe|default:"—" }}</div></div>
+        </div>
+      </section>
 
-        <tr><th>Ativo</th><td>{{ object.is_active|yesno:"Sim,Não" }}</td></tr>
-        <tr><th>Criado</th><td>{{ object.created_at }}</td></tr>
-        <tr><th>Atualizado</th><td>{{ object.updated_at }}</td></tr>
-      </tbody>
-    </table>
+      <!-- ===== MANUFATURA ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="manufatura" hidden>
+        <div class="grid">
+          <div><label>Corte</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.corte|default:"—" }}</div></div>
+          <div><label>Costura</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.costura|default:"—" }}</div></div>
+          <div><label>Estamparia</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.estamparia|default:"—" }}</div></div>
+          <div><label>Bordado</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.bordado|default:"—" }}</div></div>
+          <div><label>Lavanderia</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.lavanderia|default:"—" }}</div></div>
+          <div><label>Acabamento</label><div class="input" style="border:none;padding:0">{{ tab_manufatura.acabamento|default:"—" }}</div></div>
+        </div>
+      </section>
 
-    <div class="actions" style="margin-top:16px; display:flex; gap:8px;">
+      <!-- ===== MATERIAL ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="material" hidden>
+        <div class="grid">
+          <div class="col-span-2">
+            <label>Tecido 1</label>
+            <div class="input" style="border:none;padding:0">{{ tab_material.tecido_1|default:"—" }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== GRADE ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="grade" hidden>
+        {% with cab=tab_grade.cabecalho linhas=tab_grade.linhas %}
+        <div class="mb-4">
+          {% if cab and cab|length %}
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:160px">Cor</th>
+                  {% for c in cab %}<th>{{ c }}</th>{% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% if linhas and linhas|length %}
+                  {% for row in linhas %}
+                    <tr>
+                      <td>{{ row.cor }}</td>
+                      {% for v in row.vals %}<td>{{ v }}</td>{% endfor %}
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="{{ cab|length|add:'1' }}">Sem linhas definidas.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="alert info">Sem cabeçalho de tamanhos.</div>
+          {% endif %}
+        </div>
+        {% endwith %}
+      </section>
+
+      <!-- ===== AVIAMENTOS OFICINA ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="av-oficina" hidden>
+        <div class="grid">
+          <div class="col-span-2">
+            <label>Linha 1</label>
+            <div class="input" style="border:none;padding:0">{{ tab_av_oficina.linha_1|default:"—" }}</div>
+          </div>
+        </div>
+        {% with it=tab_av_oficina.itens %}
+        <div class="mt-3">
+          {% if it and it|length %}
+            <table class="table">
+              <thead><tr><th>Item</th><th>Qtd/Obs</th></tr></thead>
+              <tbody>
+                {% for r in it %}
+                  <tr><td>{{ r.item }}</td><td>{{ r.qtd_obs }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="alert info">Sem itens de oficina.</div>
+          {% endif %}
+        </div>
+        {% endwith %}
+      </section>
+
+      <!-- ===== AVIAMENTOS ACABAMENTO ===== -->
+      <section class="tab-panel" role="tabpanel" data-tab="av-acab" hidden>
+        <div class="grid">
+          <div><label>Sacola</label><div class="input" style="border:none;padding:0">{{ tab_av_acab.sacola|default:"—" }}</div></div>
+          <div><label>Tag</label><div class="input" style="border:none;padding:0">{{ tab_av_acab.tag|default:"—" }}</div></div>
+        </div>
+        {% with ex=tab_av_acab.extras %}
+        <div class="mt-3">
+          {% if ex and ex|length %}
+            <table class="table">
+              <thead><tr><th>Item</th><th>Qtd/Obs</th></tr></thead>
+              <tbody>
+                {% for r in ex %}
+                  <tr>
+                    <td>{% firstof r.item r.key %}</td>
+                    <td>{% firstof r.qtd_obs r.val %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="alert info">Sem itens adicionais.</div>
+          {% endif %}
+        </div>
+        {% endwith %}
+      </section>
+    </div>
+
+    <div class="form-actions">
       <a class="btn" href="{% url 'catalog:produto_update' object.pk %}">Editar</a>
-      <a class="btn secondary" href="{% url 'catalog:produto_delete' object.pk %}">Excluir</a>
       <a class="btn secondary" href="{% url 'catalog:produto_list' %}">Voltar</a>
     </div>
   </div>
 </div>
+
+<script src="{% static 'crontex/js/produto_form_tabs.js' %}"></script>
 {% endblock %}

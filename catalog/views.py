@@ -1,164 +1,149 @@
 # -*- coding: utf-8 -*-
-from __future__ import annotations
-
-from decimal import Decimal, InvalidOperation
-from typing import Any
-import io
-
-import pandas as pd
-
-from django import forms
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import Q
-from django.http import HttpResponse
-from django.shortcuts import redirect
+import json
+from typing import cast, Any, Dict
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView
-
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views.generic import CreateView, UpdateView, ListView, DetailView, DeleteView,TemplateView  
 from .models import Product
 from .forms import ProductForm
-from .schema import FIELD_BY_HEADER, is_required_present
 
 
-# ---------- List / CRUD ----------
-
-class ProductListView(LoginRequiredMixin, ListView):
-    template_name = "catalog/produto_list.html"
-    paginate_by = 20
-
-    def get_queryset(self):
-        q = (self.request.GET.get("q") or "").strip()
-        qs = Product.objects.all()
-        if q:
-            qs = qs.filter(
-                Q(sku__icontains=q) |
-                Q(name__icontains=q) |
-                Q(ncm__icontains=q) |
-                Q(product_category__icontains=q) |
-                Q(brand__icontains=q)
-            )
-        return qs.order_by("sku")
+def _loads_json_safe(val: Any) -> Dict[str, Any]:
+    """Aceita None/str/dict e devolve dict."""
+    if not val:
+        return {}
+    if isinstance(val, dict):
+        return val
+    try:
+        return json.loads(str(val))
+    except Exception:
+        return {}
 
 
-class ProductCreateView(PermissionRequiredMixin, CreateView):
-    permission_required = "catalog.add_product"
-    template_name = "catalog/produto_form.html"
-    form_class = ProductForm
-    success_url = reverse_lazy("catalog:produto_list")
+def _dump_json(data: Dict[str, Any]) -> str:
+    return json.dumps(data, ensure_ascii=False)
 
 
-class ProductUpdateView(PermissionRequiredMixin, UpdateView):
-    permission_required = "catalog.change_product"
-    template_name = "catalog/produto_form.html"
-    form_class = ProductForm
-    queryset = Product.objects.all()
-    success_url = reverse_lazy("catalog:produto_list")
+def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
+    cd = form.cleaned_data
 
-
-class ProductDeleteView(PermissionRequiredMixin, DeleteView):
-    permission_required = "catalog.delete_product"
-    template_name = "catalog/produto_confirm_delete.html"
-    queryset = Product.objects.all()
-    success_url = reverse_lazy("catalog:produto_list")
-
-
-# ---------- Importação ----------
-
-class ImportForm(forms.Form):
-    file = forms.FileField(help_text="Envie .xlsx ou .csv no layout do Bling.")
-
-
-class ProductImportView(PermissionRequiredMixin, FormView):
-    permission_required = "catalog.add_product"
-    template_name = "catalog/produto_import.html"
-    form_class = ImportForm
-    success_url = reverse_lazy("catalog:produto_list")
-
-    NUMERIC_FIELDS = {
-        "price", "ipi_fixed", "stock_qty", "cost_price",
-        "purchase_price", "icms_st_base_retencao",
-        "icms_st_valor_retencao", "icms_proprio_substituto",
-        "width_cm", "height_cm", "length_cm",
-        "weight_net", "weight_gross",
+    pedido = {
+        "requisitante": cd.get("pedido_requisitante") or "",
+        "cliente": cd.get("pedido_cliente") or "",
+        "status": cd.get("pedido_status") or "",
     }
 
-    BOOL_FIELDS_TRUE = {"1", "true", "t", "sim", "yes", "y"}
+    os_tab = {
+        "estilo": cd.get("os_estilo") or "",
+        "arte": cd.get("os_arte") or "",
+        "modelagem": cd.get("os_modelagem") or "",
+        "pilotagem": cd.get("os_pilotagem") or "",
+        "encaixe": cd.get("os_encaixe") or "",
+    }
 
-    def form_valid(self, form: ImportForm) -> HttpResponse:
-        f = form.cleaned_data["file"]
-        fname = f.name.lower()
+    manuf = {
+        "corte": cd.get("m_corte") or "",
+        "costura": cd.get("m_costura") or "",
+        "estamparia": cd.get("m_estamparia") or "",
+        "bordado": cd.get("m_bordado") or "",
+        "lavanderia": cd.get("m_lavanderia") or "",
+        "acabamento": cd.get("m_acabamento") or "",
+    }
 
-        buf = io.BytesIO(f.read())
-        if fname.endswith(".csv"):
-            df = pd.read_csv(buf, sep=";", dtype=str).fillna("")
-        else:
-            df = pd.read_excel(buf, engine="openpyxl", dtype=str).fillna("")
+    material = {"tecido_1": cd.get("material_tecido_1") or ""}
 
-        headers = list(df.columns)
-        if not is_required_present(headers):
-            messages.error(self.request, "Headers obrigatórios ausentes: Código e Descrição.")
-            return redirect("catalog:produto_list")
+    grade = {"cabecalho": [], "linhas": []}
 
-        rename_map = {h: FIELD_BY_HEADER[h] for h in headers if h in FIELD_BY_HEADER}
-        df = df.rename(columns=rename_map)
+    av_oficina = {
+        "linha_1": cd.get("av_oficina_linha_1") or "",
+        "itens": [],
+    }
 
-        created = updated = errors = 0
+    av_acab = {
+        "sacola": cd.get("avacab_sacola") or "",
+        "tag": cd.get("avacab_tag") or "",
+        "extras": [],
+    }
 
-        for line_no, (_, row) in enumerate(df.iterrows(), start=2):
-            try:
-                payload: dict[str, Any] = {}
+    return {
+        "pedido": pedido,
+        "os": os_tab,
+        "manufatura": manuf,
+        "material": material,
+        "grade": grade,
+        "aviamentos_oficina": av_oficina,
+        "aviamentos_acabamento": av_acab,
+    }
 
-                for _, model_key in rename_map.items():
-                    val = row.get(model_key, "")
-                    payload[model_key] = val
 
-                for k in self.NUMERIC_FIELDS:
-                    if k in payload:
-                        v = str(payload[k]).strip()
-                        if v == "":
-                            payload[k] = None
-                        else:
-                            v = v.replace(".", "").replace(",", ".")
-                            try:
-                                payload[k] = Decimal(v)
-                            except (InvalidOperation, ValueError):
-                                raise ValueError(f"{k}: valor numérico inválido '{row.get(k)}'")
+class ProdutoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = Product
+    permission_required = "catalog.view_product"
+    template_name = "catalog/produto_list.html"
+    context_object_name = "object_list"
 
-                if "clone_from_parent" in payload:
-                    payload["clone_from_parent"] = str(payload["clone_from_parent"]).lower() in self.BOOL_FIELDS_TRUE
-                if "free_shipping" in payload:
-                    payload["free_shipping"] = str(payload["free_shipping"]).lower() in self.BOOL_FIELDS_TRUE
-                if "is_active" in payload:
-                    payload["is_active"] = str(payload["is_active"]).lower() in self.BOOL_FIELDS_TRUE
 
-                extras: dict[str, Any] = {}
-                for original_header in headers:
-                    if original_header not in FIELD_BY_HEADER:
-                        val = row.get(original_header, "")
-                        if val not in ("", None):
-                            extras[original_header] = val
-                if extras:
-                    payload["bling_extra"] = {**(payload.get("bling_extra") or {}), **extras}
+class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    model = Product
+    permission_required = "catalog.view_product"
+    template_name = "catalog/produto_detail.html"
+    context_object_name = "object"
 
-                sku = (payload.get("sku") or "").strip()
-                name = (payload.get("name") or "").strip()
-                if not sku or not name:
-                    raise ValueError("SKU e Descrição são obrigatórios.")
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        obj = cast(Product, self.object)  # hints para Pylance
+        extras = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        ctx["tab_pedido"] = extras.get("pedido", {})
+        ctx["tab_bling"] = obj
+        ctx["tab_os"] = extras.get("os", {})
+        ctx["tab_manufatura"] = extras.get("manufatura", {})
+        ctx["tab_material"] = extras.get("material", {})
+        ctx["tab_grade"] = extras.get("grade", {})
+        ctx["tab_av_oficina"] = extras.get("aviamentos_oficina", {})
+        ctx["tab_av_acab"] = extras.get("aviamentos_acabamento", {})
+        return ctx
 
-                _, created_flag = Product.objects.update_or_create(
-                    sku=sku,
-                    defaults=payload,
-                )
-                created += int(created_flag)
-                updated += int(not created_flag)
 
-            except Exception as exc:
-                errors += 1
-                messages.warning(self.request, f"Linha {line_no}: {exc}")
+class ProdutoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Product
+    form_class = ProductForm
+    permission_required = "catalog.add_product"
+    success_url = reverse_lazy("catalog:produto_list")
+    template_name = "catalog/produto_form.html"
 
-        messages.success(
-            self.request,
-            f"Import concluído. Criados: {created}. Atualizados: {updated}. Erros: {errors}."
-        )
-        return redirect("catalog:produto_list")
+    def form_valid(self, form):
+        resp = super().form_valid(form)
+        obj = cast(Product, self.object)
+        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        current.update(_collect_extras_from_form(form))
+        obj.bling_extra = _dump_json(current)
+        obj.save(update_fields=["bling_extra"])
+        return resp
+
+
+class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Product
+    form_class = ProductForm
+    permission_required = "catalog.change_product"
+    success_url = reverse_lazy("catalog:produto_list")
+    template_name = "catalog/produto_form.html"
+
+    def form_valid(self, form):
+        resp = super().form_valid(form)
+        obj = cast(Product, self.object)
+        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        current.update(_collect_extras_from_form(form))
+        obj.bling_extra = _dump_json(current)
+        obj.save(update_fields=["bling_extra"])
+        return resp
+
+
+class ProdutoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Product
+    permission_required = "catalog.delete_product"
+    success_url = reverse_lazy("catalog:produto_list")
+    template_name = "catalog/produto_confirm_delete.html"
+
+class ProdutoImportView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = "catalog.add_product"
+    template_name = "catalog/produto_import.html"
