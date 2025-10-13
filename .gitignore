@@ -1,13 +1,27 @@
-# Python/Django
+# Python
 __pycache__/
 *.py[cod]
-*.sqlite3
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.env
+.venv/
+venv/
+pip-wheel-metadata/
+
+# Django
 db.sqlite3
 /media/
 staticfiles/
-.env
-.venv/
-.env.*
-.DS_Store
-.idea/
+static_root/
+*.log
+
+# IDE
 .vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

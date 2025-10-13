@@ -1,3 +1,4 @@
+{# templates/catalog/produto_detail.html #}
 {% extends "base_app.html" %}
 {% load static %}
 {% block title %}Produto — {{ object.sku }}{% endblock %}
@@ -114,34 +115,82 @@
 
       <!-- ===== GRADE ===== -->
       <section class="tab-panel" role="tabpanel" data-tab="grade" hidden>
-        {% with cab=tab_grade.cabecalho linhas=tab_grade.linhas %}
-        <div class="mb-4">
-          {% if cab and cab|length %}
-            <table class="table">
-              <thead>
-                <tr>
-                  <th style="width:160px">Cor</th>
-                  {% for c in cab %}<th>{{ c }}</th>{% endfor %}
-                </tr>
-              </thead>
-              <tbody>
-                {% if linhas and linhas|length %}
-                  {% for row in linhas %}
-                    <tr>
-                      <td>{{ row.cor }}</td>
-                      {% for v in row.vals %}<td>{{ v }}</td>{% endfor %}
-                    </tr>
-                  {% endfor %}
+        {# 1) Prioriza legado #}
+        {% if tab_grade and tab_grade.cabecalho %}
+          {% with cab=tab_grade.cabecalho linhas=tab_grade.linhas %}
+          <div class="mb-4">
+            {% if cab and cab|length %}
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:160px">Cor</th>
+                    {% for c in cab %}<th>{{ c }}</th>{% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if linhas and linhas|length %}
+                    {% for row in linhas %}
+                      <tr>
+                        <td>{{ row.cor }}</td>
+                        {% for v in row.vals %}<td>{{ v }}</td>{% endfor %}
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="{{ cab|length|add:'1' }}">Sem linhas definidas.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            {% else %}
+              <div class="alert info">Sem cabeçalho de tamanhos.</div>
+            {% endif %}
+          </div>
+          {% endwith %}
+        {% else %}
+          {# 2) Fallback para bling_extra.grade #}
+          {% with extra=object.bling_extra %}
+            {% if extra and extra.grade and extra.grade.valores %}
+              {% with grade=extra.grade orient=grade.param_orientacao|default:"colunas" parametro=grade.parametro|default:"Parâmetro" %}
+                {% if orient == "colunas" %}
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width:160px">{{ parametro }}</th>
+                        {% for h in grade.valores %}<th>{{ h }}</th>{% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th>Única</th>
+                        {% for _ in grade.valores %}<td class="cell"></td>{% endfor %}
+                      </tr>
+                    </tbody>
+                  </table>
                 {% else %}
-                  <tr><td colspan="{{ cab|length|add:'1' }}">Sem linhas definidas.</td></tr>
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width:160px">{{ parametro }}</th>
+                        <th>Única</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for v in grade.valores %}
+                        <tr>
+                          <th>{{ v }}</th>
+                          <td class="cell"></td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="2" class="muted">Sem valores.</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
                 {% endif %}
-              </tbody>
-            </table>
-          {% else %}
-            <div class="alert info">Sem cabeçalho de tamanhos.</div>
-          {% endif %}
-        </div>
-        {% endwith %}
+              {% endwith %}
+            {% else %}
+              <div class="alert info">Sem grade definida.</div>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
       </section>
 
       <!-- ===== AVIAMENTOS OFICINA ===== -->
@@ -205,5 +254,6 @@
   </div>
 </div>
 
-<script src="{% static 'crontex/js/produto_form_tabs.js' %}"></script>
+<link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
+<script src="{% static 'crontex/js/produto_form_full.js' %}"></script>
 {% endblock %}
