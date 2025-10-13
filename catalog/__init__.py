@@ -1,0 +1,1 @@
+# Django 3.2+: apps.py já é detectado. Nada a fazer aqui.

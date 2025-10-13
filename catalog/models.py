@@ -2,7 +2,8 @@
 from decimal import Decimal
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from .validators import validate_gtin, validate_ncm, validate_nonnegative
+from catalog.validators import validate_gtin, validate_ncm, validate_nonnegative
+from catalog.validators.ean import validate_ean13
 
 class Product(models.Model):
     # Bling básicos
@@ -43,6 +44,9 @@ class Product(models.Model):
     product_category = models.CharField("Categoria do produto", max_length=150, blank=True)  # 58
     extra_info = models.TextField("Informações Adicionais", blank=True)              # 59
 
+    #grid
+    variations_grid = models.JSONField(default=dict, blank=True)  # {"rows":[{"name":"Cor","values":["Azul","Verde"]}]}
+    
     # Campos catálogo adicionais
     cest = models.CharField("CEST", max_length=7, blank=True)
     gtin = models.CharField("GTIN/EAN", max_length=14, blank=True, validators=[validate_gtin])
@@ -70,3 +74,43 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.sku} - {self.name}"
+    
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, related_name="variants", on_delete=models.CASCADE)
+
+    # nomes livres para UX
+    size_name = models.CharField("Tamanho (nome)", max_length=50, blank=True)
+    color_name = models.CharField("Cor (nome)", max_length=50, blank=True)
+
+    # códigos normalizados de 2 dígitos (para compor EAN)
+    size_code = models.CharField("Tamanho (código 2d)", max_length=2, blank=True)
+    color_code = models.CharField("Cor (código 2d)", max_length=2, blank=True)
+
+    # identificação
+    sku = models.CharField("SKU variante", max_length=80, blank=True, unique=True)
+    ean13 = models.CharField("EAN-13", max_length=13, blank=True, unique=True, validators=[validate_ean13])
+
+    # dados opcionais da variante
+    stock_qty = models.DecimalField("Estoque", max_digits=12, decimal_places=3, default=Decimal("0"), blank=True, validators=[validate_nonnegative])
+    price_override = models.DecimalField("Preço override", max_digits=12, decimal_places=2, default=Decimal("0"), blank=True, validators=[validate_nonnegative])
+
+    created_at = models.DateTimeField("Criado em", auto_now_add=True)
+    updated_at = models.DateTimeField("Atualizado em", auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["sku"]),
+            models.Index(fields=["ean13"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["product", "size_name", "color_name"], name="uniq_variant_by_names_per_product"),
+        ]
+        verbose_name = "Variante de produto"
+        verbose_name_plural = "Variantes de produto"
+
+    def __str__(self):
+        prod = getattr(self, "product", None)
+        base = getattr(prod, "sku", "—")
+        tag = "/".join([s for s in [self.size_name, self.color_name] if s]) or "variante"
+        return f"{base} · {tag}"

@@ -1,9 +1,10 @@
+{# templates/catalog/produto_form.html #}
 {% extends "base_app.html" %}
 {% load static %}
 {% block title %}{{ form.instance.pk|yesno:"Editar produto,Novo produto" }}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container catalog-scope">
   <div class="card">
     <div class="card-title">{{ form.instance.pk|yesno:"Editar produto,Novo produto" }}</div>
 
@@ -14,7 +15,6 @@
     <nav class="tabs" role="tablist" aria-label="Abas do produto">
       <button type="button" class="tab is-active" role="tab" aria-selected="true" tabindex="0" data-tab="pedido">Pedido</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="bling">Bling</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="os">OS</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="manufatura">Manufatura</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="material">Material</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="grade">Grade</button>
@@ -25,10 +25,10 @@
     <form method="post" id="produto-form" class="form">
       {% csrf_token %}
       {{ form.non_field_errors }}
-      {{ form.form_uid }} {# UID auto único #}
+      {{ form.form_uid }}
 
       <div class="tab-panels" id="produto-tab-panels">
-        <!-- ========== ABA: PEDIDO ========== -->
+        <!-- PEDIDO -->
         <section class="tab-panel is-active" role="tabpanel" data-tab="pedido">
           <div class="grid">
             <div>{{ form.pedido_requisitante.label_tag }} {{ form.pedido_requisitante }}</div>
@@ -41,21 +41,32 @@
             <div id="pedido-extra" class="dynamic-list"></div>
             <template id="tpl-pedido-extra">
               <div class="dynamic-row" data-row>
-                <input type="text" name="pedido_extra_key___idx__" placeholder="Nome do campo">
-                <input type="text" name="pedido_extra_val___idx__" placeholder="Valor">
+                <input type="text" name="pedido_extra_key___idx__" placeholder="Nome do campo" class="input">
+                <input type="text" name="pedido_extra_val___idx__" placeholder="Valor" class="input">
               </div>
             </template>
           </div>
         </section>
 
-        <!-- ========== ABA: BLING (model fields) ========== -->
+        <!-- BLING -->
         <section class="tab-panel" role="tabpanel" data-tab="bling" hidden>
+          <div class="alert info">EAN-13 em tempo real via <b>Referência</b> + <b>Base</b> + códigos gerados pelos chips da Grade.</div>
+          <div class="grid mb-4">
+            <div>
+              <label class="label" for="ean-ref">Referência (4 dígitos)</label>
+              <input id="ean-ref" type="text" maxlength="4" class="input" placeholder="0000" autocomplete="off">
+            </div>
+            <div>
+              <label class="label" for="ean-base">Base (4 dígitos)</label>
+              <input id="ean-base" type="text" maxlength="4" class="input" placeholder="0000" autocomplete="off">
+            </div>
+          </div>
+
           <div class="grid">
             <div>{{ form.external_id.label_tag }} {{ form.external_id }}</div>
             <div>{{ form.sku.label_tag }} {{ form.sku }}</div>
-            <div class="col-span-2">{{ form.name.label_tag }} {{ form.name }}</div>
+            <div>{{ form.name.label_tag }} {{ form.name }}</div>
 
-            <div>{{ form.unit.label_tag }} {{ form.unit }}</div>
             <div>{{ form.origin.label_tag }} {{ form.origin }}</div>
             <div>{{ form.status.label_tag }} {{ form.status }}</div>
             <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
@@ -87,18 +98,8 @@
             <div>{{ form.brand.label_tag }} {{ form.brand }}</div>
             <div>{{ form.unit_of_measure.label_tag }} {{ form.unit_of_measure }}</div>
 
-            <div class="col-span-2">{{ form.external_link.label_tag }} {{ form.external_link }}</div>
-            <div class="col-span-2">{{ form.video_url.label_tag }} {{ form.video_url }}</div>
-            <div>{{ form.warranty_months_supplier.label_tag }} {{ form.warranty_months_supplier }}</div>
-            <div>{{ form.product_condition.label_tag }} {{ form.product_condition }}</div>
-
-            <div class="col-span-2">{{ form.notes.label_tag }} {{ form.notes }}</div>
-            <div class="col-span-2">{{ form.extra_info.label_tag }} {{ form.extra_info }}</div>
-            <div class="col-span-2">{{ form.bling_extra.label_tag }} {{ form.bling_extra }}</div>
-
-            <div>{{ form.supplier_code.label_tag }} {{ form.supplier_code }}</div>
-            <div>{{ form.supplier_name.label_tag }} {{ form.supplier_name }}</div>
-            <div class="col-span-2">{{ form.location.label_tag }} {{ form.location }}</div>
+            {# mantém bling_extra como TextArea oculto p/ legado #}
+            <div style="display:none">{{ form.bling_extra }}</div>
           </div>
 
           <div class="mt-3">
@@ -106,35 +107,14 @@
             <div id="bling-extra" class="dynamic-list"></div>
             <template id="tpl-bling-extra">
               <div class="dynamic-row" data-row>
-                <input type="text" name="bling_extra_key___idx__" placeholder="Nome do campo">
-                <input type="text" name="bling_extra_val___idx__" placeholder="Valor">
+                <input type="text" name="bling_extra_key___idx__" placeholder="Nome do campo" class="input">
+                <input type="text" name="bling_extra_val___idx__" placeholder="Valor" class="input">
               </div>
             </template>
           </div>
         </section>
 
-        <!-- ========== ABA: OS ========== -->
-        <section class="tab-panel" role="tabpanel" data-tab="os" hidden>
-          <div class="grid">
-            <div>{{ form.os_estilo.label_tag }} {{ form.os_estilo }}</div>
-            <div>{{ form.os_arte.label_tag }} {{ form.os_arte }}</div>
-            <div>{{ form.os_modelagem.label_tag }} {{ form.os_modelagem }}</div>
-            <div>{{ form.os_pilotagem.label_tag }} {{ form.os_pilotagem }}</div>
-            <div>{{ form.os_encaixe.label_tag }} {{ form.os_encaixe }}</div>
-          </div>
-          <div class="mt-3">
-            <a class="dynamic-add" data-add="#os-extra" data-template="#tpl-os-extra">+ inserir campo</a>
-            <div id="os-extra" class="dynamic-list"></div>
-            <template id="tpl-os-extra">
-              <div class="dynamic-row" data-row>
-                <input type="text" name="os_extra_key___idx__" placeholder="Nome do campo">
-                <input type="text" name="os_extra_val___idx__" placeholder="Valor">
-              </div>
-            </template>
-          </div>
-        </section>
-
-        <!-- ========== ABA: MANUFATURA ========== -->
+        <!-- MANUFATURA -->
         <section class="tab-panel" role="tabpanel" data-tab="manufatura" hidden>
           <div class="grid">
             <div>{{ form.m_corte.label_tag }} {{ form.m_corte }}</div>
@@ -144,71 +124,28 @@
             <div>{{ form.m_lavanderia.label_tag }} {{ form.m_lavanderia }}</div>
             <div>{{ form.m_acabamento.label_tag }} {{ form.m_acabamento }}</div>
           </div>
-          <div class="mt-3">
-            <a class="dynamic-add" data-add="#manu-extra" data-template="#tpl-manu-extra">+ inserir campo</a>
-            <div id="manu-extra" class="dynamic-list"></div>
-            <template id="tpl-manu-extra">
-              <div class="dynamic-row" data-row>
-                <input type="text" name="manu_extra_key___idx__" placeholder="Nome do campo">
-                <input type="text" name="manu_extra_val___idx__" placeholder="Valor">
-              </div>
-            </template>
-          </div>
         </section>
 
-        <!-- ========== ABA: MATERIAL ========== -->
+        <!-- MATERIAL -->
         <section class="tab-panel" role="tabpanel" data-tab="material" hidden>
           <div class="grid">
-            <div class="col-span-2">{{ form.material_tecido_1.label_tag }} {{ form.material_tecido_1 }}</div>
-          </div>
-          <div class="mt-3">
-            <a class="dynamic-add" data-add="#material-list" data-template="#tpl-material-row">+ inserir campo</a>
-            <div id="material-list" class="dynamic-list"></div>
-            <template id="tpl-material-row">
-              <div class="dynamic-row" data-row>
-                <input type="text" name="material_tecido___idx__" placeholder="Tecido">
-                <input type="text" name="material_obs___idx__" placeholder="Observação">
-              </div>
-            </template>
+            <div>{{ form.os_estilo.label_tag }} {{ form.os_estilo }}</div>
+            <div>{{ form.os_arte.label_tag }} {{ form.os_arte }}</div>
+            <div>{{ form.os_modelagem.label_tag }} {{ form.os_modelagem }}</div>
+            <div>{{ form.os_pilotagem.label_tag }} {{ form.os_pilotagem }}</div>
+            <div>{{ form.os_encaixe.label_tag }} {{ form.os_encaixe }}</div>
           </div>
         </section>
 
-        <!-- ========== ABA: GRADE ========== -->
+        <!-- GRADE -->
         <section class="tab-panel" role="tabpanel" data-tab="grade" hidden>
-          <div class="mb-4">Linha de cabeçalho de tamanhos. Você pode adicionar colunas e linhas.</div>
-
-          <div class="grid">
-            <div class="col-span-2">
-              <div class="dynamic-list" id="grade-head">
-                <div class="dynamic-row" data-row>
-                  <input type="text" name="grade_col_1" placeholder="P">
-                  <input type="text" name="grade_col_2" placeholder="M">
-                  <input type="text" name="grade_col_3" placeholder="G">
-                  <input type="text" name="grade_col_4" placeholder="GG">
-                </div>
-              </div>
-              <a class="dynamic-add" data-add="#grade-head" data-template="#tpl-grade-col">+ inserir coluna</a>
-              <template id="tpl-grade-col">
-                <div class="dynamic-row" data-row>
-                  <input type="text" name="grade_col___idx__" placeholder="Novo tamanho">
-                </div>
-              </template>
-            </div>
-
-            <div class="col-span-2 mt-3">
-              <div id="grade-body" class="dynamic-list"></div>
-              <a class="dynamic-add" data-add="#grade-body" data-template="#tpl-grade-row">+ inserir linha</a>
-              <template id="tpl-grade-row">
-                <div class="dynamic-row" data-row>
-                  <input type="text" name="grade_cor___idx__" placeholder="Cor (ex.: Preto)">
-                  <input type="text" name="grade_vals___idx__" placeholder="Quantidades (ex.: 10 10 10 11)">
-                </div>
-              </template>
-            </div>
+          <div class="alert info" role="note">
+            Adicione variações e defina se cada atributo será <b>linha</b> ou <b>coluna</b>. Use TAB/ENTER/vírgula para criar mini-chips.
           </div>
+          {% include "catalog/_grades_variations.html" %}
         </section>
 
-        <!-- ========== ABA: AVIAMENTOS OFICINA ========== -->
+        <!-- AVIAMENTOS OFICINA -->
         <section class="tab-panel" role="tabpanel" data-tab="av-oficina" hidden>
           <div class="grid">
             <div class="col-span-2">{{ form.av_oficina_linha_1.label_tag }} {{ form.av_oficina_linha_1 }}</div>
@@ -218,28 +155,18 @@
             <div id="av-oficina-list" class="dynamic-list"></div>
             <template id="tpl-av-oficina-row">
               <div class="dynamic-row" data-row>
-                <input type="text" name="av_oficina_item___idx__" placeholder="Item (ex.: Linha 120 Tex)">
-                <input type="text" name="av_oficina_qtd___idx__" placeholder="Qtd/Obs">
+                <input type="text" name="av_oficina_item___idx__" placeholder="Item (ex.: Linha 120 Tex)" class="input">
+                <input type="text" name="av_oficina_qtd___idx__" placeholder="Qtd/Obs" class="input">
               </div>
             </template>
           </div>
         </section>
 
-        <!-- ========== ABA: AVIAMENTOS ACABAMENTO ========== -->
+        <!-- AVIAMENTOS ACABAMENTO -->
         <section class="tab-panel" role="tabpanel" data-tab="av-acab" hidden>
           <div class="grid">
             <div>{{ form.avacab_sacola.label_tag }} {{ form.avacab_sacola }}</div>
             <div>{{ form.avacab_tag.label_tag }} {{ form.avacab_tag }}</div>
-          </div>
-          <div class="mt-3">
-            <a class="dynamic-add" data-add="#av-acab-list" data-template="#tpl-av-acab-row">+ inserir campo</a>
-            <div id="av-acab-list" class="dynamic-list"></div>
-            <template id="tpl-av-acab-row">
-              <div class="dynamic-row" data-row>
-                <input type="text" name="av_acab_item___idx__" placeholder="Item (ex.: Etiqueta borracha)">
-                <input type="text" name="av_acab_qtd___idx__" placeholder="Qtd/Obs">
-              </div>
-            </template>
           </div>
         </section>
       </div>
@@ -252,5 +179,7 @@
   </div>
 </div>
 
-<script src="{% static 'crontex/js/produto_form_tabs.js' %}"></script>
+<link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
+<link rel="stylesheet" href="{% static 'crontex/css/grades_variations.css' %}">
+<script src="{% static 'crontex/js/produto_form_full.js' %}"></script>
 {% endblock %}

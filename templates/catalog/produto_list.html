@@ -1,64 +1,75 @@
+{# templates/catalog/produto_list.html #}
 {% extends "base_app.html" %}
 {% load static %}
 {% block title %}Produtos{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="cards" style="margin-bottom:16px;">
-    <div class="card">
-      <div class="card-title">Produtos</div>
-      <div class="card-value">{{ page_obj.paginator.count }}</div>
-    </div>
-  </div>
-
+<div class="container catalog-scope">
   <div class="card">
-    <div class="actions" style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
-      <form method="get" class="card__filter" style="display:flex; gap:8px; align-items:center; margin:0;">
-        <input type="search" name="q" value="{{ request.GET.q }}" placeholder="SKU, descrição, NCM, categoria" class="input">
-        <button type="submit" class="btn">Buscar</button>
-      </form>
-      <div>
-        <a href="{% url 'catalog:produto_create' %}" class="btn">Novo</a>
-        <a href="{% url 'catalog:produto_import' %}" class="btn secondary">Importar</a>
+    <div class="card-title">Produtos</div>
+
+    <div class="form-actions mb-3">
+      <a class="btn" href="{% url 'catalog:produto_create' %}">+ Novo Produto</a>
+      <a class="btn secondary" href="{% url 'catalog:produto_import' %}">Importar do Bling</a>
+    </div>
+
+    {% if object_list %}
+      <div class="table-wrapper">
+        <table class="table is-fullwidth">
+          <thead>
+            <tr>
+              <th style="width:80px">ID</th>
+              <th>SKU</th>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Estoque</th>
+              <th>Status</th>
+              <th style="width:160px;text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in object_list %}
+              <tr>
+                <td>{{ obj.id }}</td>
+                <td>{{ obj.sku|default:"—" }}</td>
+                <td>
+                  <a href="{% url 'catalog:produto_detail' pk=obj.pk %}" class="link">{{ obj.name|default:"(Sem nome)" }}</a>
+                </td>
+                <td>{{ obj.product_category|default:"—" }}</td>
+                <td>{{ obj.price|floatformat:2 }}</td>
+                <td>{{ obj.stock_qty|default:"0" }}</td>
+                <td>
+                  <span class="badge {% if obj.is_active %}success{% else %}danger{% endif %}">
+                    {{ obj.is_active|yesno:"Ativo,Inativo" }}
+                  </span>
+                </td>
+                <td style="text-align:right">
+                  <a class="btn small" href="{% url 'catalog:produto_detail' pk=obj.pk %}">Ver</a>
+                  <a class="btn small secondary" href="{% url 'catalog:produto_update' pk=obj.pk %}">Editar</a>
+                  <a class="btn small danger" href="{% url 'catalog:produto_delete' pk=obj.pk %}">Excluir</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="8" class="muted">Nenhum produto encontrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    </div>
 
-    <table class="table" style="margin-top:12px;">
-      <thead>
-        <tr>
-          <th>SKU</th><th>Descrição</th><th>Preço</th><th>NCM</th><th>Categoria</th><th>Estoque</th><th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for o in object_list %}
-        <tr>
-          <td>{{ o.sku }}</td>
-          <td><a class="side-link" href="{% url 'catalog:produto_detail' o.pk %}">{{ o.name }}</a></td>
-          <td>{{ o.price }}</td>
-          <td>{{ o.ncm }}</td>
-          <td>{{ o.product_category }}</td>
-          <td>{{ o.stock_qty }}</td>
-          <td>
-            <a class="side-link" href="{% url 'catalog:produto_update' o.pk %}">Editar</a> ·
-            <a class="side-link" href="{% url 'catalog:produto_delete' o.pk %}">Excluir</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7">Sem registros.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    {% if is_paginated %}
-    <div class="pagination" style="margin-top:12px;">
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}">«</a>
+      {% if is_paginated %}
+        <div class="pagination mt-3">
+          {% if page_obj.has_previous %}
+            <a class="btn secondary" href="?page={{ page_obj.previous_page_number }}">← Anterior</a>
+          {% endif %}
+          <span class="mx-2">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a class="btn secondary" href="?page={{ page_obj.next_page_number }}">Próxima →</a>
+          {% endif %}
+        </div>
       {% endif %}
-      <span>página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}">»</a>
-      {% endif %}
-    </div>
+    {% else %}
+      <div class="alert info">Nenhum produto cadastrado ainda.</div>
     {% endif %}
   </div>
 </div>

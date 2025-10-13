@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.urls import path
-from .views import (
+from catalog.views.web import (
     ProdutoListView,
     ProdutoCreateView,
     ProdutoDetailView,
@@ -8,7 +8,7 @@ from .views import (
     ProdutoDeleteView,
     ProdutoImportView,
 )
-
+from catalog.views.ean_api import generate_ean_bulk
 app_name = "catalog"
 
 urlpatterns = [
@@ -18,4 +18,5 @@ urlpatterns = [
     path("produtos/<int:pk>/editar/", ProdutoUpdateView.as_view(), name="produto_update"),
     path("produtos/<int:pk>/excluir/", ProdutoDeleteView.as_view(), name="produto_delete"),
     path("produtos/importar/", ProdutoImportView.as_view(), name="produto_import"),
+    path("api/ean/generate", generate_ean_bulk, name="ean_generate"),
 ]
