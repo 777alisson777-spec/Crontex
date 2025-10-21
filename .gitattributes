@@ -1,18 +1,22 @@
-* text=auto
+# Use LF em texto; preserve binários
+* text=auto eol=lf
 
-# Padronize LF no repo para arquivos de código
+# Python / Django
 *.py   text eol=lf
-*.md   text eol=lf
-*.txt  text eol=lf
 *.html text eol=lf
 *.css  text eol=lf
 *.js   text eol=lf
 *.json text eol=lf
+*.md   text eol=lf
 *.yml  text eol=lf
 *.yaml text eol=lf
 *.toml text eol=lf
-*.ini  text eol=lf
 
-# Arquivos Windows que podem ficar CRLF no checkout
-*.bat  text eol=crlf
-*.ps1  text eol=crlf
+# Arquivos binários (não converter EOL)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.woff *.woff2 *.ttf binary
