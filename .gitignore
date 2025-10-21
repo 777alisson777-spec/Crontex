@@ -1,28 +1,33 @@
-# Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.so
 *.egg-info/
-.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+
+# Virtualenvs
 .venv/
 venv/
-pip-wheel-metadata/
+env/
 
 # Django
 db.sqlite3
+*.sqlite3
 /media/
-staticfiles/
-static_root/
+/staticfiles/
+.env
+.env.*
+.secret
 *.log
 
-# IDE
+# Node (se existir frontend)
+node_modules/
+
+# IDE/OS
 .vscode/
 .idea/
-*.iml
-
-# OS
 .DS_Store
-Thumbs.db
-staticfiles/
