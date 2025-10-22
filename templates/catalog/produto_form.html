@@ -14,6 +14,7 @@
 
     <nav class="tabs" role="tablist" aria-label="Abas do produto">
       <button type="button" class="tab is-active" role="tab" aria-selected="true" tabindex="0" data-tab="pedido">Pedido</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="os">OS</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="bling">Bling</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="manufatura">Manufatura</button>
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="material">Material</button>
@@ -31,9 +32,28 @@
         <!-- PEDIDO -->
         <section class="tab-panel is-active" role="tabpanel" data-tab="pedido">
           <div class="grid">
-            <div>{{ form.pedido_requisitante.label_tag }} {{ form.pedido_requisitante }}</div>
-            <div>{{ form.pedido_cliente.label_tag }} {{ form.pedido_cliente }}</div>
-            <div>{{ form.pedido_status.label_tag }} {{ form.pedido_status }}</div>
+            <!-- Requisitante -->
+            <div>
+              <label for="id_pedido_requisitante">Requisitante:</label>
+              <!-- Combobox declarativa (envolve o input existente) -->
+              <div data-combo data-txt="#id_pedido_requisitante" data-hid="#id_pedido_requisitante_id"></div>
+              <input type="hidden" name="pedido_requisitante_id" id="id_pedido_requisitante_id" class="input">
+              <input type="text" name="pedido_requisitante" maxlength="150" class="input" id="id_pedido_requisitante">
+            </div>
+
+            <!-- Cliente -->
+            <div>
+              <label for="id_pedido_cliente">Cliente:</label>
+              <div data-combo data-txt="#id_pedido_cliente" data-hid="#id_pedido_cliente_id"></div>
+              <input type="hidden" name="pedido_cliente_id" id="id_pedido_cliente_id" class="input">
+              <input type="text" name="pedido_cliente" maxlength="150" class="input" id="id_pedido_cliente">
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label for="id_pedido_status">Status:</label>
+              <input type="text" name="pedido_status" maxlength="80" class="input" id="id_pedido_status">
+            </div>
           </div>
 
           <div class="mt-3">
@@ -45,6 +65,60 @@
                 <input type="text" name="pedido_extra_val___idx__" placeholder="Valor" class="input">
               </div>
             </template>
+          </div>
+        </section>
+        <!-- OS -->
+        <section class="tab-panel" role="tabpanel" data-tab="os">
+          <div class="grid">
+            <!-- Estilo -->
+            <div>
+              <label for="id_os_estilo">Estilo:</label>
+              <div class="combo" data-combo data-role="ESTILISTA">
+                {{ form.os_estilo_id }}
+                {{ form.os_estilo }}
+                <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
+              </div>
+            </div>
+
+            <!-- Arte -->
+            <div>
+              <label for="id_os_arte">Arte:</label>
+              <div class="combo" data-combo data-role="ARTE">
+                {{ form.os_arte_id }}
+                {{ form.os_arte }}
+                <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
+              </div>
+            </div>
+
+            <!-- Modelagem -->
+            <div>
+              <label for="id_os_modelagem">Modelagem:</label>
+              <div class="combo" data-combo data-role="MODELAGEM">
+                {{ form.os_modelagem_id }}
+                {{ form.os_modelagem }}
+                <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
+              </div>
+            </div>
+
+            <!-- Pilotagem -->
+            <div>
+              <label for="id_os_pilotagem">Pilotagem:</label>
+              <div class="combo" data-combo data-role="PILOTAGEM">
+                {{ form.os_pilotagem_id }}
+                {{ form.os_pilotagem }}
+                <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
+              </div>
+            </div>
+
+            <!-- Encaixe -->
+            <div>
+              <label for="id_os_encaixe">Encaixe:</label>
+              <div class="combo" data-combo data-role="ENCAIXE">
+                {{ form.os_encaixe_id }}
+                {{ form.os_encaixe }}
+                <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -115,14 +189,25 @@
         </section>
 
         <!-- MANUFATURA -->
-        <section class="tab-panel" role="tabpanel" data-tab="manufatura" hidden>
+        <section class="tab-panel" role="tabpanel" data-tab="manufatura">
           <div class="grid">
-            <div>{{ form.m_corte.label_tag }} {{ form.m_corte }}</div>
-            <div>{{ form.m_costura.label_tag }} {{ form.m_costura }}</div>
-            <div>{{ form.m_estamparia.label_tag }} {{ form.m_estamparia }}</div>
-            <div>{{ form.m_bordado.label_tag }} {{ form.m_bordado }}</div>
-            <div>{{ form.m_lavanderia.label_tag }} {{ form.m_lavanderia }}</div>
-            <div>{{ form.m_acabamento.label_tag }} {{ form.m_acabamento }}</div>
+            <div><label for="id_m_corte">Corte:</label> {{ form.m_corte }}</div>
+            <div><label for="id_m_costura">Costura:</label> {{ form.m_costura }}</div>
+            <div><label for="id_m_estamparia">Estamparia:</label> {{ form.m_estamparia }}</div>
+            <div><label for="id_m_bordado">Bordado:</label> {{ form.m_bordado }}</div>
+            <div><label for="id_m_lavanderia">Lavanderia:</label> {{ form.m_lavanderia }}</div>
+            <div><label for="id_m_acabamento">Acabamento:</label> {{ form.m_acabamento }}</div>
+          </div>
+
+          <div class="mt-3">
+            <a class="dynamic-add" data-add="#manuf-extra" data-template="#tpl-manuf-extra">+ inserir campo</a>
+            <div id="manuf-extra" class="dynamic-list"></div>
+            <template id="tpl-manuf-extra">
+              <div class="dynamic-row" data-row>
+                <input type="text" name="manuf_extra_key___idx__" placeholder="Nome do campo" class="input">
+                <input type="text" name="manuf_extra_val___idx__" placeholder="Valor" class="input">
+              </div>
+            </template>
           </div>
         </section>
 
@@ -182,4 +267,6 @@
 <link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
 <link rel="stylesheet" href="{% static 'crontex/css/grades_variations.css' %}">
 <script src="{% static 'crontex/js/produto_form_full.js' %}"></script>
+<script src="{% static 'crontex/js/people_optionlist.js' %}?v=2"></script>       
+
 {% endblock %}

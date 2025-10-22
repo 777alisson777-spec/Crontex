@@ -219,3 +219,93 @@
   box-shadow: 0 0 0 1px rgba(96,165,250,0.4);
 }
 #grade-from-variations .token-list { gap:8px; }
+/* ===== Combobox Crontex (input único com seta e dropdown com busca) ===== */
+.combo {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.combo > .input {
+  flex: 1 1 auto;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 8px 0 0 8px;
+  border-right: 0; /* junta com a seta */
+}
+
+.combo-toggle {
+  position: relative;
+  flex: 0 0 38px;
+  border: 1px solid #e5e7eb;
+  border-left: 0;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+}
+.combo-toggle::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #374151; /* seta */
+  transform: translateY(1px);
+}
+
+.combo:focus-within > .input { border-color: #111827; }
+.combo:focus-within > .combo-toggle { border-color: #111827; }
+
+.combo-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.combo.open .combo-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.combo-panel[hidden]{ display:none; } /* fallback */
+
+.combo-search {
+  width: 100%;
+  margin-bottom: 6px;
+  border-radius: 6px;
+}
+
+.combo-list {
+  max-height: 220px;
+  overflow: auto;
+  list-style: none;
+  margin: 0; padding: 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.combo-option {
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.combo-option[aria-selected="true"],
+.combo-option:hover {
+  background: rgba(34, 197, 94, 0.10); /* verde Crontex */
+}
+.combo-empty {
+  padding: 8px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}

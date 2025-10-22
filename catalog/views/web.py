@@ -1,51 +1,70 @@
 # -*- coding: utf-8 -*-
-import json
-from itertools import product as cart_product
-from typing import Any, Dict, List, Tuple, cast
+from __future__ import annotations
 
-from django.urls import reverse_lazy
+import json
+from typing import Any, Dict, List, Optional, Tuple, cast
+
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.views.generic import (
-    CreateView,
-    UpdateView,
-    ListView,
-    DetailView,
-    DeleteView,
-    TemplateView,
-)
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_GET
+from django.views.generic import DetailView, ListView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 
 from catalog.models import Product
 from catalog.forms import ProductForm
 
 
-# ============================== UTIL ==============================
-def _loads_json_safe(val: Any) -> Dict[str, Any]:
-    """Aceita None/str/dict e devolve dict."""
-    if not val:
+# -----------------------------
+# Utilidades internas
+# -----------------------------
+
+def _loads_json_safe(obj: Any) -> Dict[str, Any]:
+    """
+    Converte obj em dict de forma tolerante (str JSON, dict ou None).
+    """
+    if not obj:
         return {}
-    if isinstance(val, dict):
-        return val
+    if isinstance(obj, dict):
+        return obj
     try:
-        return json.loads(str(val))
+        return json.loads(obj)
     except Exception:
         return {}
 
 
-def _dump_json(data: Dict[str, Any]) -> str:
-    """Dump bonito e tolerante (utf-8)."""
-    return json.dumps(data, ensure_ascii=False)
+def _as_dict(obj: Any) -> Dict[str, Any]:
+    return _loads_json_safe(obj)
 
+
+# -----------------------------
+# Coleta dos dados das abas (somente o necessário para este MVP)
+# -----------------------------
 
 def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
-    """Coleta abas não-model do form para guardar em bling_extra (legado/visual)."""
+    """
+    Coleta abas não-model do form para guardar em bling_extra (visual/legado).
+    Esta versão adiciona IDs opcionais em PEDIDO (requisitante/cliente).
+    """
     cd = form.cleaned_data
 
+    # ============ PEDIDO ============
     pedido = {
         "requisitante": cd.get("pedido_requisitante") or "",
         "cliente": cd.get("pedido_cliente") or "",
         "status": cd.get("pedido_status") or "",
+        # IDs opcionais vindos de inputs hidden (autocomplete)
+        "requisitante_id": cd.get("pedido_requisitante_id") or None,
+        "cliente_id": cd.get("pedido_cliente_id") or None,
+        # executante_* será injetado na view com base no request.user
     }
 
+    # ============ OS ============
     os_tab = {
         "estilo": cd.get("os_estilo") or "",
         "arte": cd.get("os_arte") or "",
@@ -54,7 +73,8 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
         "encaixe": cd.get("os_encaixe") or "",
     }
 
-    manuf = {
+    # ============ MANUFATURA ============
+    manuf_tab = {
         "corte": cd.get("m_corte") or "",
         "costura": cd.get("m_costura") or "",
         "estamparia": cd.get("m_estamparia") or "",
@@ -63,214 +83,156 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
         "acabamento": cd.get("m_acabamento") or "",
     }
 
-    material = {"tecido_1": cd.get("material_tecido_1") or ""}
-
-    # grade_json (nova UI) já é persistido dentro de ProductForm.save() em bling_extra["grade"]
-    # Aqui mantemos a estrutura de "abas" que você já tinha:
-    grade = {"cabecalho": [], "linhas": []}
-
-    av_oficina = {
-        "linha_1": cd.get("av_oficina_linha_1") or "",
-        "itens": [],
+    # ============ MATERIAL / AVIAMENTOS (placeholders MVP) ============
+    material_tab = {
+        "tecidos": cd.get("material_tecidos") or cd.get("material_tecido_1") or "",
+        "observacoes": cd.get("material_obs") or "",
     }
 
-    av_acab = {
-        "sacola": cd.get("avacab_sacola") or "",
-        "tag": cd.get("avacab_tag") or "",
+    avi_oficina = {
+        "tag": cd.get("aviof_tag") or cd.get("av_oficina_linha_1") or "",
         "extras": [],
     }
+    avi_acabamento = {
+        "tag": cd.get("avacab_tag") or "",
+        "sacola": cd.get("avacab_sacola") or "",
+        "extras": [],
+    }
+
+    # ============ GRADE ============
+    # Já validada/normalizada no form; aqui mantemos a string JSON (ou {})
+    grade_payload = cd.get("grade_payload") or "{}"
 
     return {
         "pedido": pedido,
         "os": os_tab,
-        "manufatura": manuf,
-        "material": material,
-        "grade": grade,
-        "aviamentos_oficina": av_oficina,
-        "aviamentos_acabamento": av_acab,
+        "manufatura": manuf_tab,
+        "material": material_tab,
+        "avi_oficina": avi_oficina,
+        "avi_acabamento": avi_acabamento,
+        "grade": grade_payload,
     }
 
 
-# ============================== EAN/GRADES ==============================
-def _ean13_check_digit(num12: str) -> str:
+# -----------------------------
+# Merge + geração de SKUs (mantém comportamento existente)
+# -----------------------------
+
+def _merge_extras(base: Dict[str, Any], inc: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Calcula dígito verificador EAN-13 para uma string de 12 dígitos.
+    Merge raso e seguro: não apaga chaves ausentes no incremento.
     """
-    s = 0
-    for i, ch in enumerate(num12):
-        d = ord(ch) - 48  # int rápido
-        s += d * (3 if (i % 2) else 1)
-    dv = (10 - (s % 10)) % 10
-    return str(dv)
-
-
-def _two_digit(i: int) -> str:
-    """Formata índice 1-based como '01', '02', ..."""
-    return f"{i:02d}"
-
-
-def _derive_ref_base(obj: Product) -> Tuple[str, str]:
-    """
-    Política conservadora:
-    - REF = primeiros 4 chars do SKU (se não, '0000')
-    - BASE = últimos 4 chars numéricos dentro do SKU; fallback '0000'
-    Tudo em dígitos apenas; qualquer não-numérico vira '0'.
-    """
-    sku = (obj.sku or "").strip()
-    ref_raw = (sku[:4] or "0000").ljust(4, "0")[:4]
-    base_raw = (sku[-4:] or "0000").rjust(4, "0")[:4]
-
-    ref = "".join(ch if ch.isdigit() else "0" for ch in ref_raw)
-    base = "".join(ch if ch.isdigit() else "0" for ch in base_raw)
-    if len(ref) != 4:
-        ref = "0000"
-    if len(base) != 4:
-        base = "0000"
-    return ref, base
-
-
-def _generate_grade_skus(obj: Product) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """
-    Gera SKUs EAN-13 a partir de bling_extra["grade"].
-    Espera estrutura:
-      {
-        "parametros": [
-          {"chave": "tam", "valores": ["P","M","G"]},
-          {"chave": "cor", "valores": ["Preto","Branco"]}
-        ]
-      }
-
-    Regras:
-    - Considera, no máximo, DOIS parâmetros para o EAN-13 (tam e cor).
-    - Mapeia cada valor para código sequencial de 2 dígitos (01..99) por parâmetro.
-    - Monta base de 12 dígitos: [REF(4)][BASE(4)][TAM(2)][COR(2)] e calcula DV.
-    - Se existir apenas 1 parâmetro, o segundo vira '00'.
-    - Se houver mais de 2 parâmetros, os extras são ignorados para o EAN, mas permanecem no combo.
-
-    Retorna:
-      (rows, meta)
-      rows = [{ "combo": {chave1:val1, chave2:val2, ...}, "sku": "ean13" }, ...]
-      meta = {"ref":..., "base":..., "param_tamanho": chave1, "param_cor": chave2, "warn": "...(opcional)"}
-    """
-    extra = _loads_json_safe(getattr(obj, "bling_extra", {}))
-    grade = extra.get("grade") or {}
-    parametros = grade.get("parametros") or []
-
-    rows: List[Dict[str, Any]] = []
-    meta: Dict[str, Any] = {}
-
-    if not isinstance(parametros, list) or len(parametros) == 0:
-        return rows, meta
-
-    # Ordena parâmetros na ordem que o usuário informou
-    params_norm = []
-    for p in parametros:
-        chave = (p.get("chave") or "").strip()
-        valores = [str(v).strip() for v in (p.get("valores") or []) if str(v).strip()]
-        if not chave:
+    out = dict(base or {})
+    for k, v in (inc or {}).items():
+        # grade é uma string JSON; preservar como veio do form
+        if k == "grade" and isinstance(v, str):
+            out[k] = v
             continue
-        params_norm.append({"chave": chave, "valores": valores})
-
-    if len(params_norm) == 0:
-        return rows, meta
-
-    # Até dois parâmetros para codificação
-    p1 = params_norm[0]
-    p2 = params_norm[1] if len(params_norm) > 1 else {"chave": "", "valores": []}
-
-    meta["param_tamanho"] = p1["chave"]
-    meta["param_cor"] = p2.get("chave") or ""
-    if len(params_norm) > 2:
-        meta["warn"] = "Mais de 2 parâmetros informados; somente os 2 primeiros foram usados no EAN-13."
-
-    # Mapas de valor -> código 2d (01..)
-    map1 = {v: _two_digit(i + 1) for i, v in enumerate(p1["valores"])} or {"—": "00"}
-    map2 = {v: _two_digit(i + 1) for i, v in enumerate(p2.get("valores", []))} or {"—": "00"}
-
-    ref, base = _derive_ref_base(obj)
-    meta["ref"] = ref
-    meta["base"] = base
-
-    # Produto cartesiano de TODOS os parâmetros (para exibir combo completo),
-    # mas só p1/p2 entram no código do EAN.
-    axes = [p["valores"] if p["valores"] else ["—"] for p in params_norm]
-    all_combos = list(cart_product(*axes))  # tuples de valores, na ordem dos params_norm
-
-    for combo_vals in all_combos:
-        combo_dict = {params_norm[i]["chave"]: combo_vals[i] for i in range(len(params_norm))}
-        # códigos 2d
-        v1 = combo_dict.get(p1["chave"], "—")
-        v2 = combo_dict.get(p2.get("chave", ""), "—") if p2.get("chave") else "—"
-        c1 = map1.get(v1, "00")
-        c2 = map2.get(v2, "00")
-
-        base12 = f"{ref}{base}{c1}{c2}"
-        dv = _ean13_check_digit(base12)
-        ean13 = f"{base12}{dv}"
-
-        rows.append({"combo": combo_dict, "sku": ean13})
-
-    return rows, meta
+        out[k] = v
+    return out
 
 
-def _merge_and_generate_skus(obj: Product, form: ProductForm) -> None:
+def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Mescla abas auxiliares ao bling_extra e injeta:
-      - grade_skus: lista de {combo, sku}
-      - grade_skus_meta: metadados para exibição
+    Gera grade_skus/grade_skus_meta a partir de bling_extra.grade (string JSON)
+    Reaproveita payload já salvo pelo form (ProductForm.save()).
     """
-    # 1) base atual
-    current = _loads_json_safe(getattr(obj, "bling_extra", {}))
+    extras = _loads_json_safe(product.bling_extra)
+    grade_raw = extras.get("grade") or "{}"
+    try:
+        grade = json.loads(grade_raw) if isinstance(grade_raw, str) else (grade_raw or {})
+    except Exception:
+        grade = {}
 
-    # 2) merge abas não-model
-    current.update(_collect_extras_from_form(form))
+    # MVP: se não houver parâmetros, retorna vazio
+    params = (grade.get("parametros") or []) if isinstance(grade, dict) else []
+    if not isinstance(params, list) or not params:
+        return [], {"params": [], "count": 0}
 
-    # 3) garante que 'grade' salva pelo form permaneça dict
-    if isinstance(current.get("grade"), str):
-        try:
-            current["grade"] = json.loads(current["grade"])
-        except Exception:
-            current["grade"] = {}
+    # Exemplo simples: carteziano dos "valores" de até 2 parâmetros
+    values_lists: List[List[str]] = []
+    for prm in params:
+        vals = prm.get("valores") or []
+        if isinstance(vals, list) and vals:
+            values_lists.append([str(x) for x in vals])
 
-    # 4) gera SKUs
-    rows, meta = _generate_grade_skus(obj)
-    current["grade_skus"] = rows
-    current["grade_skus_meta"] = meta
+    if not values_lists:
+        return [], {"params": [], "count": 0}
 
-    # 5) persiste
-    obj.bling_extra = current
-    obj.save(update_fields=["bling_extra"])
+    # Cartesian product (simples)
+    combos: List[List[str]] = [[]]
+    for lst in values_lists:
+        combos = [c + [v] for c in combos for v in lst]
+
+    items: List[Dict[str, Any]] = []
+    for c in combos:
+        suffix = "-".join([str(x) for x in c])
+        items.append({
+            "sku": f"{product.sku}-{suffix}" if product.sku else suffix,
+            "attrs": c,
+        })
+
+    meta = {"params": params, "count": len(items)}
+    return items, meta
 
 
-# ============================== VIEWS ==============================
+def _merge_and_generate_skus(product: Product, form: ProductForm) -> None:
+    """
+    Atualiza bling_extra com tabs do form e preenche grade_skus/grade_skus_meta.
+    """
+    current = _loads_json_safe(product.bling_extra)
+    inc = _collect_extras_from_form(form)
+    merged = _merge_extras(current, inc)
+
+    grade_items, meta = _generate_grade_skus(product, form)
+    merged["grade_skus"] = grade_items
+    merged["grade_skus_meta"] = meta
+
+    product.bling_extra = merged
+    product.save(update_fields=["bling_extra"])
+
+
+# -----------------------------
+# Views
+# -----------------------------
+
 class ProdutoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Product
     permission_required = "catalog.view_product"
     template_name = "catalog/produto_list.html"
-    context_object_name = "object_list"
+    context_object_name = "produtos"
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = super().get_queryset().order_by("-id")
+        q = (self.request.GET.get("q") or "").strip()
+        if q:
+            qs = qs.filter(name__icontains=q) | qs.filter(sku__icontains=q)
+        return qs
 
 
 class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = Product
     permission_required = "catalog.view_product"
     template_name = "catalog/produto_detail.html"
-    context_object_name = "object"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        obj = cast(Product, self.object)
-        extras = _loads_json_safe(getattr(obj, "bling_extra", {}))
 
+        # Cast explícito: Product (Pylance feliz)
+        obj: Product = cast(Product, self.get_object())
+
+        extras = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        ctx["extras"] = extras
+
+        # Abas
         ctx["tab_pedido"] = extras.get("pedido", {})
-        ctx["tab_bling"] = obj
         ctx["tab_os"] = extras.get("os", {})
         ctx["tab_manufatura"] = extras.get("manufatura", {})
         ctx["tab_material"] = extras.get("material", {})
+        ctx["tab_avi_oficina"] = extras.get("avi_oficina", {})
+        ctx["tab_avi_acabamento"] = extras.get("avi_acabamento", {})
         ctx["tab_grade"] = extras.get("grade", {})
-        ctx["tab_av_oficina"] = extras.get("aviamentos_oficina", {})
-        ctx["tab_av_acab"] = extras.get("aviamentos_acabamento", {})
-
-        # Nova: grade + SKUs gerados no servidor (para render no detalhe)
         ctx["tab_grade_skus"] = extras.get("grade_skus", [])
         ctx["tab_grade_skus_meta"] = extras.get("grade_skus_meta", {})
 
@@ -284,14 +246,29 @@ class ProdutoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     success_url = reverse_lazy("catalog:produto_list")
     template_name = "catalog/produto_form.html"
 
+    @transaction.atomic
     def form_valid(self, form: ProductForm):
-        # salva model + bling_extra.grade via ProductForm.save()
         resp = super().form_valid(form)
-        obj = cast(Product, self.object)
 
-        # Mescla extras e gera grade_skus
+        obj: Product = form.instance
+
+        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        pedido = current.get("pedido") or {}
+        u = getattr(self.request, "user", None)
+        if u is not None:
+            pedido["executante_id"] = getattr(u, "id", None)
+            pedido["executante_username"] = getattr(u, "username", "") or getattr(u, "email", "")
+            try:
+                pedido["executante_fullname"] = u.get_full_name() or ""
+            except Exception:
+                pedido["executante_fullname"] = ""
+        current["pedido"] = pedido
+        obj.bling_extra = current
+        obj.save(update_fields=["bling_extra"])
+
         _merge_and_generate_skus(obj, form)
 
+        messages.success(self.request, _("Produto salvo com sucesso."))
         return resp
 
 
@@ -302,12 +279,29 @@ class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     success_url = reverse_lazy("catalog:produto_list")
     template_name = "catalog/produto_form.html"
 
+    @transaction.atomic
     def form_valid(self, form: ProductForm):
         resp = super().form_valid(form)
-        obj = cast(Product, self.object)
+
+        obj: Product = form.instance
+
+        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
+        pedido = current.get("pedido") or {}
+        u = getattr(self.request, "user", None)
+        if u is not None:
+            pedido["executante_id"] = getattr(u, "id", None)
+            pedido["executante_username"] = getattr(u, "username", "") or getattr(u, "email", "")
+            try:
+                pedido["executante_fullname"] = u.get_full_name() or ""
+            except Exception:
+                pedido["executante_fullname"] = ""
+        current["pedido"] = pedido
+        obj.bling_extra = current
+        obj.save(update_fields=["bling_extra"])
 
         _merge_and_generate_skus(obj, form)
 
+        messages.success(self.request, _("Produto atualizado com sucesso."))
         return resp
 
 
@@ -318,6 +312,22 @@ class ProdutoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
     template_name = "catalog/produto_confirm_delete.html"
 
 
-class ProdutoImportView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class ProdutoImportView(LoginRequiredMixin, PermissionRequiredMixin, FormMixin, ListView):
+    model = Product
     permission_required = "catalog.add_product"
     template_name = "catalog/produto_import.html"
+    success_url = reverse_lazy("catalog:produto_list")
+    form_class = ProductForm  # placeholder para manter layout
+
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        messages.info(request, _("Importação não implementada no MVP."))
+        return redirect(self.success_url)
+
+
+@require_GET
+def collaborator_search_legacy(request: HttpRequest) -> JsonResponse:
+    """
+    Placeholder legado (se templates esperarem /catalog/collaborators/search/).
+    Recomendado usar /people/collaborators/search/ (app people).
+    """
+    return JsonResponse({"items": []})

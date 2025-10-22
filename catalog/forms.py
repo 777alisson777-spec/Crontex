@@ -134,6 +134,10 @@ class ProductForm(forms.ModelForm):
     pedido_cliente = forms.CharField(label="Cliente", max_length=150, required=False)
     pedido_status = forms.CharField(label="Status", max_length=80, required=False)
 
+    # >>> NOVO: IDs opcionais (autocomplete) <<<
+    pedido_requisitante_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    pedido_cliente_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
     # ===================== ABA: OS =====================
     os_estilo = forms.CharField(label="Estilo", max_length=150, required=False)
     os_arte = forms.CharField(label="Arte", max_length=150, required=False)
