@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -18,6 +19,10 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMi
 
 from catalog.models import Product
 from catalog.forms import ProductForm
+from django.forms import BaseModelForm
+
+# NOVO: merge idempotente dos vínculos de pessoas em bling_extra["people"]
+from catalog.services.people_links import merge_people_links
 
 
 # -----------------------------
@@ -42,6 +47,18 @@ def _as_dict(obj: Any) -> Dict[str, Any]:
     return _loads_json_safe(obj)
 
 
+def _dset(d: Dict[str, Any], path: List[str], value: Any) -> None:
+    """
+    Define 'value' em d[path[0]][path[1]]... criando dicts intermediários.
+    """
+    cur = d
+    for key in path[:-1]:
+        if key not in cur or not isinstance(cur.get(key), dict):
+            cur[key] = {}
+        cur = cur[key]  # type: ignore[assignment]
+    cur[path[-1]] = value
+
+
 # -----------------------------
 # Coleta dos dados das abas (somente o necessário para este MVP)
 # -----------------------------
@@ -49,7 +66,8 @@ def _as_dict(obj: Any) -> Dict[str, Any]:
 def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
     """
     Coleta abas não-model do form para guardar em bling_extra (visual/legado).
-    Esta versão adiciona IDs opcionais em PEDIDO (requisitante/cliente).
+    Atenção: vínculos de PESSOAS (IDs) são tratados pelo service merge_people_links().
+    Aqui só armazenamos os rótulos/textos das abas (quando fizer sentido) e outros campos.
     """
     cd = form.cleaned_data
 
@@ -58,9 +76,6 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
         "requisitante": cd.get("pedido_requisitante") or "",
         "cliente": cd.get("pedido_cliente") or "",
         "status": cd.get("pedido_status") or "",
-        # IDs opcionais vindos de inputs hidden (autocomplete)
-        "requisitante_id": cd.get("pedido_requisitante_id") or None,
-        "cliente_id": cd.get("pedido_cliente_id") or None,
         # executante_* será injetado na view com base no request.user
     }
 
@@ -100,7 +115,7 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
     }
 
     # ============ GRADE ============
-    # Já validada/normalizada no form; aqui mantemos a string JSON (ou {})
+    # Já validada/normalizada no form; aqui mantemos a string JSON (ou "{}")
     grade_payload = cd.get("grade_payload") or "{}"
 
     return {
@@ -115,16 +130,16 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
 
 
 # -----------------------------
-# Merge + geração de SKUs (mantém comportamento existente)
+# Merge + geração de SKUs (mantém comportamento, com robustez extra)
 # -----------------------------
 
 def _merge_extras(base: Dict[str, Any], inc: Dict[str, Any]) -> Dict[str, Any]:
     """
     Merge raso e seguro: não apaga chaves ausentes no incremento.
+    Mantém 'grade' como string JSON vinda do form.
     """
     out = dict(base or {})
     for k, v in (inc or {}).items():
-        # grade é uma string JSON; preservar como veio do form
         if k == "grade" and isinstance(v, str):
             out[k] = v
             continue
@@ -132,9 +147,26 @@ def _merge_extras(base: Dict[str, Any], inc: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
+def _normalize_grade_values(values: List[Any]) -> List[str]:
+    """
+    Normaliza cada item da lista de 'valores' de um parâmetro da grade.
+    Aceita itens dicts (label/code) ou strings já normalizadas.
+    Retorna lista de sufixos legíveis, priorizando 'code' > 'label' > str(item).
+    """
+    out: List[str] = []
+    for v in values:
+        if isinstance(v, dict):
+            code = str(v.get("code") or "").strip()
+            label = str(v.get("label") or "").strip()
+            out.append(code or label or str(v))
+        else:
+            out.append(str(v))
+    return [s for s in out if s]
+
+
 def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Gera grade_skus/grade_skus_meta a partir de bling_extra.grade (string JSON)
+    Gera grade_skus/grade_skus_meta a partir de bling_extra.grade (string JSON).
     Reaproveita payload já salvo pelo form (ProductForm.save()).
     """
     extras = _loads_json_safe(product.bling_extra)
@@ -144,29 +176,28 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
     except Exception:
         grade = {}
 
-    # MVP: se não houver parâmetros, retorna vazio
     params = (grade.get("parametros") or []) if isinstance(grade, dict) else []
     if not isinstance(params, list) or not params:
         return [], {"params": [], "count": 0}
 
-    # Exemplo simples: carteziano dos "valores" de até 2 parâmetros
+    # Normaliza lista de listas (uma por parâmetro com valores)
     values_lists: List[List[str]] = []
     for prm in params:
         vals = prm.get("valores") or []
         if isinstance(vals, list) and vals:
-            values_lists.append([str(x) for x in vals])
+            values_lists.append(_normalize_grade_values(vals))
 
     if not values_lists:
-        return [], {"params": [], "count": 0}
+        return [], {"params": params, "count": 0}
 
-    # Cartesian product (simples)
+    # Produto cartesiano simples
     combos: List[List[str]] = [[]]
     for lst in values_lists:
         combos = [c + [v] for c in combos for v in lst]
 
     items: List[Dict[str, Any]] = []
     for c in combos:
-        suffix = "-".join([str(x) for x in c])
+        suffix = "-".join(c)
         items.append({
             "sku": f"{product.sku}-{suffix}" if product.sku else suffix,
             "attrs": c,
@@ -178,17 +209,48 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
 
 def _merge_and_generate_skus(product: Product, form: ProductForm) -> None:
     """
-    Atualiza bling_extra com tabs do form e preenche grade_skus/grade_skus_meta.
+    Atualiza bling_extra com tabs do form, mescla vínculos de pessoas
+    e preenche grade_skus/grade_skus_meta.
     """
     current = _loads_json_safe(product.bling_extra)
     inc = _collect_extras_from_form(form)
+
+    # Mescla abas (texto/valores simples)
     merged = _merge_extras(current, inc)
 
-    grade_items, meta = _generate_grade_skus(product, form)
-    merged["grade_skus"] = grade_items
-    merged["grade_skus_meta"] = meta
+    # Mescla IDs de pessoas em merged["people"] de forma idempotente
+    product.bling_extra = merged  # passa estado atual para o service operar
+    merge_people_links(product, form.cleaned_data)
 
-    product.bling_extra = merged
+    # Gera grade_skus com base no que ficou em bling_extra["grade"]
+    grade_items, meta = _generate_grade_skus(product, form)
+
+    # Grava de volta
+    extra = _loads_json_safe(product.bling_extra)
+    extra["grade_skus"] = grade_items
+    extra["grade_skus_meta"] = meta
+    product.bling_extra = extra
+    product.save(update_fields=["bling_extra"])
+
+
+def _inject_executante(product: Product, request: HttpRequest) -> None:
+    """
+    Injeta dados do executante atual (request.user) dentro de bling_extra["pedido"].
+    """
+    current = _loads_json_safe(getattr(product, "bling_extra", {}))
+    pedido = _loads_json_safe(current.get("pedido"))
+
+    u = getattr(request, "user", None)
+    if u is not None:
+        pedido["executante_id"] = getattr(u, "id", None)
+        pedido["executante_username"] = getattr(u, "username", "") or getattr(u, "email", "")
+        try:
+            pedido["executante_fullname"] = u.get_full_name() or ""
+        except Exception:
+            pedido["executante_fullname"] = ""
+
+    current["pedido"] = pedido
+    product.bling_extra = current
     product.save(update_fields=["bling_extra"])
 
 
@@ -207,7 +269,8 @@ class ProdutoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         qs = super().get_queryset().order_by("-id")
         q = (self.request.GET.get("q") or "").strip()
         if q:
-            qs = qs.filter(name__icontains=q) | qs.filter(sku__icontains=q)
+            # MAIS ROBUSTO: usa Q combinando name|sku e preserva ordenação
+            qs = qs.filter(Q(name__icontains=q) | Q(sku__icontains=q))
         return qs
 
 
@@ -219,9 +282,7 @@ class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # Cast explícito: Product (Pylance feliz)
         obj: Product = cast(Product, self.get_object())
-
         extras = _loads_json_safe(getattr(obj, "bling_extra", {}))
         ctx["extras"] = extras
 
@@ -247,27 +308,11 @@ class ProdutoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = "catalog/produto_form.html"
 
     @transaction.atomic
-    def form_valid(self, form: ProductForm):
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
         resp = super().form_valid(form)
-
-        obj: Product = form.instance
-
-        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
-        pedido = current.get("pedido") or {}
-        u = getattr(self.request, "user", None)
-        if u is not None:
-            pedido["executante_id"] = getattr(u, "id", None)
-            pedido["executante_username"] = getattr(u, "username", "") or getattr(u, "email", "")
-            try:
-                pedido["executante_fullname"] = u.get_full_name() or ""
-            except Exception:
-                pedido["executante_fullname"] = ""
-        current["pedido"] = pedido
-        obj.bling_extra = current
-        obj.save(update_fields=["bling_extra"])
-
-        _merge_and_generate_skus(obj, form)
-
+        obj: Product = cast(Product, form.instance)
+        _inject_executante(obj, self.request)
+        _merge_and_generate_skus(obj, cast(ProductForm, form))
         messages.success(self.request, _("Produto salvo com sucesso."))
         return resp
 
@@ -280,28 +325,12 @@ class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     template_name = "catalog/produto_form.html"
 
     @transaction.atomic
-    def form_valid(self, form: ProductForm):
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
         resp = super().form_valid(form)
-
-        obj: Product = form.instance
-
-        current = _loads_json_safe(getattr(obj, "bling_extra", {}))
-        pedido = current.get("pedido") or {}
-        u = getattr(self.request, "user", None)
-        if u is not None:
-            pedido["executante_id"] = getattr(u, "id", None)
-            pedido["executante_username"] = getattr(u, "username", "") or getattr(u, "email", "")
-            try:
-                pedido["executante_fullname"] = u.get_full_name() or ""
-            except Exception:
-                pedido["executante_fullname"] = ""
-        current["pedido"] = pedido
-        obj.bling_extra = current
-        obj.save(update_fields=["bling_extra"])
-
-        _merge_and_generate_skus(obj, form)
-
-        messages.success(self.request, _("Produto atualizado com sucesso."))
+        obj: Product = cast(Product, form.instance)
+        _inject_executante(obj, self.request)
+        _merge_and_generate_skus(obj, cast(ProductForm, form))
+        messages.success(self.request, _("Produto salvo com sucesso."))
         return resp
 
 
@@ -327,7 +356,7 @@ class ProdutoImportView(LoginRequiredMixin, PermissionRequiredMixin, FormMixin, 
 @require_GET
 def collaborator_search_legacy(request: HttpRequest) -> JsonResponse:
     """
-    Placeholder legado (se templates esperarem /catalog/collaborators/search/).
-    Recomendado usar /people/collaborators/search/ (app people).
+    Endpoint legado mantido para compat (caso algum template antigo ainda aponte aqui).
+    Recomendação: usar /people/api/search/ (app people) com o nosso front atual.
     """
     return JsonResponse({"items": []})

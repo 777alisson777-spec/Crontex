@@ -43,6 +43,7 @@
       li.setAttribute("data-id", String(it.id));
       li.setAttribute("data-name", it.name);
       li.setAttribute("aria-selected", idx===0 ? "true" : "false");
+      // Mantém o visual existente: "Nome — <rótulo>"
       li.textContent = it.name + " — " + (it.role_label || it.role_key || "");
       listEl.appendChild(li);
     });
@@ -66,19 +67,45 @@
     setActiveOption(listEl, opts[idx]);
   }
 
-  // Busca colaboradores (ordem alfabética)
+  // ======= Data Source (INTEGRADO com /people/api) =======
+  // Substitui o antigo /people/collaborators/search pelo novo contrato:
+  //   GET /people/api/search/?q=<termo>&page=1[&type=<roleKey>]
+  //   -> { results: [{id, text, subtitle}], pagination: {more: bool} }
+  // Mapeamos para o shape esperado por renderItems(): {id, name, role_label|role_key}
   function fetchPeople(q, roleKey, signal){
-    const usp = new URLSearchParams();
-    if (q) usp.set("q", q);
-    if (roleKey) usp.set("role", roleKey);
-    return fetch("/people/collaborators/search/?" + usp.toString(), {credentials:"same-origin", signal})
-      .then(r => r.ok ? r.json() : {items:[]})
+    const u = new URL("/people/api/search/", window.location.origin);
+    if (q) u.searchParams.set("q", q);
+    // Nosso backend espera "type" (não "role"); mantemos compat no JS:
+    if (roleKey) u.searchParams.set("type", roleKey);
+    u.searchParams.set("page", "1");
+
+    return fetch(u.toString(), { credentials:"same-origin", signal, headers: {"X-Requested-With":"XMLHttpRequest"} })
+      .then(r => r.ok ? r.json() : {results:[]})
       .then(d => {
-        const arr = Array.isArray(d.items) ? d.items : [];
-        arr.sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "pt-BR"));
-        return arr;
+        const arr = Array.isArray(d.results) ? d.results : [];
+        // map -> shape antigo
+        const mapped = arr.map(it => ({
+          id: it.id,
+          name: it.text || "",                 // texto principal vira "name"
+          role_label: it.subtitle || "",       // opcional (mostra do lado)
+          role_key: roleKey || ""              // mantemos também, se quiser estilizar
+        }));
+        // ordena por nome (mesmo comportamento anterior)
+        mapped.sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "pt-BR"));
+        return mapped;
       })
-      .catch(()=>[]);
+      .catch(() => []);
+  }
+
+  // Hidratação: quando há ID no hidden, busca o nome em:
+  //   GET /people/api/get/?id=<pk> -> {id, text, subtitle}
+  function fetchPersonById(id, signal){
+    if (!id) return Promise.resolve(null);
+    const u = new URL("/people/api/get/", window.location.origin);
+    u.searchParams.set("id", String(id));
+    return fetch(u.toString(), { credentials:"same-origin", signal, headers: {"X-Requested-With":"XMLHttpRequest"} })
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
   }
 
   // ======= Componente Combobox =======
@@ -167,6 +194,16 @@
 
     // Ao digitar manualmente, limpamos o ID (evita mismatch nome↔ID)
     txt.addEventListener("input", function(){ if (hid) hid.value = ""; });
+
+    // Hidrata nome no input quando já houver ID (edição)
+    if (hid && hid.value && !txt.value){
+      const ctrl = new AbortController();
+      fetchPersonById(hid.value, ctrl.signal).then(data => {
+        if (data && data.text) {
+          txt.value = data.text;
+        }
+      });
+    }
 
     q.addEventListener("input", function(){
       const text = (this.value||"").trim();

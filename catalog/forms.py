@@ -7,6 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from django import forms
 from django.core.exceptions import ValidationError
 
+# NOVO: validar IDs de pessoa
+from people.models import Contact
+
 from .models import Product
 
 
@@ -117,6 +120,27 @@ def _validate_grade_payload_struct(payload: Dict[str, Any]) -> Tuple[Dict[str, A
 
 
 # =========================
+# Field utilitário para IDs de pessoa
+# =========================
+
+class ContactIdField(forms.IntegerField):
+    """
+    Campo inteiro opcional que garante a existência de um Contact.
+    Útil para os pares TEXT + HIDDEN vindos do autocomplete.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, required=False, min_value=1, **kwargs)
+
+    def clean(self, value):
+        value = super().clean(value)
+        if not value:
+            return None
+        if not Contact.objects.filter(pk=value).exists():
+            raise ValidationError("Contato inválido (ID não encontrado).")
+        return int(value)
+
+
+# =========================
 # Form
 # =========================
 
@@ -130,28 +154,28 @@ class ProductForm(forms.ModelForm):
     form_uid = forms.CharField(widget=forms.HiddenInput(), required=False, label="")
 
     # ===================== ABA: PEDIDO =====================
-    pedido_requisitante = forms.CharField(label="Requisitante", max_length=150, required=False)
-    pedido_cliente = forms.CharField(label="Cliente", max_length=150, required=False)
+    pedido_requisitante = forms.CharField(label="Requisitante", max_length=150, required=False)  # <- pessoa
+    pedido_cliente = forms.CharField(label="Cliente", max_length=150, required=False)             # <- pessoa
     pedido_status = forms.CharField(label="Status", max_length=80, required=False)
 
-    # >>> NOVO: IDs opcionais (autocomplete) <<<
-    pedido_requisitante_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
-    pedido_cliente_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    # >>> IDs opcionais (autocomplete) — agora com validação de existência <<<
+    pedido_requisitante_id = ContactIdField(widget=forms.HiddenInput())  # <- pessoa
+    pedido_cliente_id = ContactIdField(widget=forms.HiddenInput())       # <- pessoa
 
     # ===================== ABA: OS =====================
-    os_estilo = forms.CharField(label="Estilo", max_length=150, required=False)
-    os_arte = forms.CharField(label="Arte", max_length=150, required=False)
-    os_modelagem = forms.CharField(label="Modelagem", max_length=150, required=False)
-    os_pilotagem = forms.CharField(label="Pilotagem", max_length=150, required=False)
-    os_encaixe = forms.CharField(label="Encaixe", max_length=150, required=False)
+    os_estilo = forms.CharField(label="Estilo", max_length=150, required=False)        # <- pessoa
+    os_arte = forms.CharField(label="Arte", max_length=150, required=False)            # <- pessoa
+    os_modelagem = forms.CharField(label="Modelagem", max_length=150, required=False)  # <- pessoa
+    os_pilotagem = forms.CharField(label="Pilotagem", max_length=150, required=False)  # <- pessoa
+    os_encaixe = forms.CharField(label="Encaixe", max_length=150, required=False)      # <- pessoa
 
     # ===================== ABA: MANUFATURA =====================
-    m_corte = forms.CharField(label="Corte", max_length=150, required=False)
-    m_costura = forms.CharField(label="Costura", max_length=150, required=False)
-    m_estamparia = forms.CharField(label="Estamparia", max_length=150, required=False)
-    m_bordado = forms.CharField(label="Bordado", max_length=150, required=False)
-    m_lavanderia = forms.CharField(label="Lavanderia", max_length=150, required=False)
-    m_acabamento = forms.CharField(label="Acabamento", max_length=150, required=False)
+    m_corte = forms.CharField(label="Corte", max_length=150, required=False)           # <- pessoa
+    m_costura = forms.CharField(label="Costura", max_length=150, required=False)       # <- pessoa
+    m_estamparia = forms.CharField(label="Estamparia", max_length=150, required=False) # <- pessoa
+    m_bordado = forms.CharField(label="Bordado", max_length=150, required=False)       # <- pessoa
+    m_lavanderia = forms.CharField(label="Lavanderia", max_length=150, required=False) # <- pessoa
+    m_acabamento = forms.CharField(label="Acabamento", max_length=150, required=False) # <- pessoa
 
     # ===================== ABA: MATERIAL =====================
     material_tecido_1 = forms.CharField(label="Tecido 1", max_length=150, required=False)
@@ -248,6 +272,26 @@ class ProductForm(forms.ModelForm):
         self.fields["gtin"].widget.attrs.setdefault("placeholder", "EAN/GTIN")
         self.fields["product_category"].widget.attrs.setdefault("placeholder", "Categoria interna")
 
+        # [NOVO] Hidrata o texto quando já houver ID salvo (edição)
+        def _hydrate_text(text_field: str, id_field: str):
+            # tenta pegar do initial (edição) ou POST (re-render)
+            txt = self.initial.get(text_field) or self.data.get(text_field)
+            cid = (
+                self.initial.get(id_field)
+                or self.data.get(id_field)
+                or self.fields[id_field].initial
+            )
+            if (not txt) and cid:
+                try:
+                    c = Contact.objects.get(pk=int(cid))
+                    self.initial[text_field] = getattr(c, "name", str(c))
+                except Exception:
+                    pass
+
+        _hydrate_text("pedido_requisitante", "pedido_requisitante_id")
+        _hydrate_text("pedido_cliente", "pedido_cliente_id")
+        # (Se desejar, replicamos para OS/Manufatura em um próximo passo.)
+
         # Pré-carregar grade_payload a partir de bling_extra.grade (edição)
         try:
             inst = getattr(self, "instance", None)
@@ -288,6 +332,31 @@ class ProductForm(forms.ModelForm):
 
         # retorna JSON compactado e normalizado
         return json.dumps(norm, ensure_ascii=False, separators=(",", ":"))
+
+    # [NOVO] Clean geral para manter coerência entre texto e ID (requisitante/cliente)
+    def clean(self):
+        data = super().clean()
+
+        def _sync_pair(text_key: str, id_key: str):
+            txt = (data.get(text_key) or "").strip()
+            cid = data.get(id_key)
+            if cid:
+                try:
+                    c = Contact.objects.get(pk=int(cid))
+                    # força o texto para o nome oficial
+                    data[text_key] = getattr(c, "name", str(c))
+                except Exception:
+                    # se o ID não existir aqui por algum motivo, zera ambos
+                    data[text_key] = ""
+                    data[id_key] = None
+            else:
+                # sem ID selecionado => não deixa sobrar texto solto
+                data[text_key] = ""
+
+        _sync_pair("pedido_requisitante", "pedido_requisitante_id")
+        _sync_pair("pedido_cliente", "pedido_cliente_id")
+
+        return data
 
     # ----------------- save -----------------
 

@@ -321,3 +321,158 @@ def import_contacts_view(request: HttpRequest) -> HttpResponse:
         messages.success(request, f"Importação concluída: {created} criados, {updated} atualizados.")
 
     return redirect("people:list")
+
+# --- [ADICIONAR AO FINAL DE people/views.py] ---------------------------------
+# Mini-API de autocomplete para integrar com o módulo catalog (texto + hidden id).
+# Rotas já mapeadas em people/urls.py como:
+#   - name="api_search" -> /people/api/search/
+#   - name="api_get"    -> /people/api/get/
+
+from django.http import JsonResponse
+from django.db.models import Q
+from django.views.decorators.http import require_GET
+
+from .models import Contact  # usa seu model real
+
+def _safe_int(val, default=1):
+    """
+    Converte para int positivo; cai no default em caso de erro.
+    """
+    try:
+        i = int(val)
+        return i if i > 0 else default
+    except Exception:
+        return default
+
+# people/views.py  — SUBSTITUIR SOMENTE ESTA FUNÇÃO
+
+@require_GET
+def contact_search_api(request):
+    """
+    GET /people/api/search/?q=<termo>&page=1&page_size=20[&type=supplier][&role=CLIENTE]
+
+    - 'q'     : termo de busca (name/email/phone, se existirem)
+    - 'page'  : página (1-based)
+    - 'type'  : filtro opcional por Contact.type (se o model tiver esse campo)
+    - 'role'  : filtro compatível com seu front (data-role); tenta filtrar por:
+                * FK   : category.slug | category.key | category.name
+                * M2M  : categories.slug | categories.key | categories.name
+                * Char : role (campo texto simples)
+              Se nada disso existir no model, o filtro é ignorado (retorna todos).
+    Retorna:
+      {
+        "results": [{"id":<int>,"text":"Nome","subtitle":"email/phone"}],
+        "pagination": {"more": <bool>}
+      }
+    """
+    q = (request.GET.get('q') or '').strip()
+    page = _safe_int(request.GET.get('page'), 1)
+    page_size = min(_safe_int(request.GET.get('page_size'), 20), 50)
+    ctype = (request.GET.get('type') or '').strip().lower()
+    role  = (request.GET.get('role') or '').strip()
+
+    qs = Contact.objects.all().order_by('name')
+
+    # --- filtro por 'type' (se existir no model) ---
+    if ctype and hasattr(Contact, 'type'):
+        qs = qs.filter(type=ctype)
+
+    # --- filtro por 'role' (compat com seu front) ---
+    if role:
+        role_norm = role.strip().lower()
+
+        # 1) FK 'category'
+        if hasattr(Contact, 'category'):
+            rel = Contact.category.field
+            mdl = rel.related_model
+            if hasattr(mdl, 'slug'):
+                qs = qs.filter(category__slug__iexact=role_norm)
+            elif hasattr(mdl, 'key'):
+                qs = qs.filter(category__key__iexact=role_norm)
+            elif hasattr(mdl, 'name'):
+                qs = qs.filter(category__name__iexact=role_norm)
+
+        # 2) M2M 'categories'
+        elif hasattr(Contact, 'categories'):
+            rel = Contact._meta.get_field('categories')
+            mdl = rel.remote_field.model
+            if hasattr(mdl, 'slug'):
+                qs = qs.filter(categories__slug__iexact=role_norm)
+            elif hasattr(mdl, 'key'):
+                qs = qs.filter(categories__key__iexact=role_norm)
+            elif hasattr(mdl, 'name'):
+                qs = qs.filter(categories__name__iexact=role_norm)
+
+        # 3) CharField simples 'role'
+        elif hasattr(Contact, 'role'):
+            qs = qs.filter(role__iexact=role)
+
+    # --- busca textual básica ---
+    if q:
+        name_field = 'name'
+        email_field = 'email' if hasattr(Contact, 'email') else None
+        phone_field = 'phone' if hasattr(Contact, 'phone') else None
+
+        filt = Q(**{f"{name_field}__icontains": q})
+        if email_field:
+            filt |= Q(**{f"{email_field}__icontains": q})
+        if phone_field:
+            filt |= Q(**{f"{phone_field}__icontains": q})
+        qs = qs.filter(filt)
+
+    # --- paginação ---
+    start = (page - 1) * page_size
+    end = start + page_size
+    total = qs.count()
+
+    results = []
+    for c in qs[start:end]:
+        subtitle = ''
+        if hasattr(c, 'email') and getattr(c, 'email', ''):
+            subtitle = c.email
+        elif hasattr(c, 'phone') and getattr(c, 'phone', ''):
+            subtitle = c.phone
+
+        results.append({
+            "id": c.pk,
+            "text": getattr(c, 'name', str(c)),
+            "subtitle": subtitle,
+        })
+
+    return JsonResponse({
+        "results": results,
+        "pagination": {"more": total > end}
+    })
+
+
+@require_GET
+def contact_get_api(request):
+    """
+    GET /people/api/get/?id=<pk>
+    Retorna dados mínimos para hidratar o rótulo do campo quando já existe um ID salvo.
+    {
+      "id": 1, "text": "Nome", "subtitle": "email/phone"
+    }
+    """
+    cid = _safe_int(request.GET.get('id'), 0)
+    if not cid:
+        return JsonResponse({"detail": "Missing id"}, status=400)
+
+    try:
+        c = Contact.objects.get(pk=cid)
+    except Contact.DoesNotExist:
+        return JsonResponse({"detail": "Not Found"}, status=404)
+
+    subtitle = ''
+    if hasattr(c, 'email') and getattr(c, 'email', ''):
+        subtitle = c.email
+    elif hasattr(c, 'phone') and getattr(c, 'phone', ''):
+        subtitle = c.phone
+
+    return JsonResponse({
+        "id": c.pk,
+        "text": getattr(c, 'name', str(c)),
+        "subtitle": subtitle,
+    })
+# --- [FIM DAS ADIÇÕES] -------------------------------------------------------
+
