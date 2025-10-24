@@ -10,7 +10,7 @@ urlpatterns = [
 
     # Apps do projeto (ordem: UI -> people -> catalog -> accounts -> auth)
     path("", include("crontex_ui.urls")),  # /entrar/, /sair/, etc. (front/autenticação custom)
-    path("people/", include(("people.urls", "people"), namespace="people")),
+    path("people/", include("people.urls")),
     path("", include(("catalog.urls", "catalog"), namespace="catalog")),
 
     # Admin global e autenticação adicional

@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}CRONTEX{% endblock %}</title>
     {% load static %}
+
+    <!-- Icons (Google Material Symbols Outlined) -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- CSS do projeto -->
     <link rel="stylesheet" href="{% static 'crontex/css/core.css' %}">
     <link rel="stylesheet" href="{% static 'crontex/css/app.css' %}">
     <link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
-
-
 </head>
 <body>
   <!-- Barra superior -->
@@ -30,31 +34,78 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <nav style="display:flex; flex-direction:column; gap:4px;">
-        <a class="side-link {% if block.nav_overview %}active{% endif %}" 
-            href="{% url 'crontex_ui:dashboard' %}">
-            Visão geral
+        <a class="side-link {% if block.nav_overview %}active{% endif %}"
+           href="{% url 'crontex_ui:dashboard' %}">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Visão geral</span>
         </a>
-        <a class="side-link" href="#">Pedidos</a>
+
+        <a class="side-link" href="#">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Pedidos</span>
+        </a>
+
         <a class="side-link {% if request.resolver_match and request.resolver_match.url_name == 'global_dashboard' %}active{% endif %}"
           href="{% url 'accounts:global_dashboard' %}">
-          Dashboard
+          <span class="material-symbols-outlined">monitoring</span>
+          <span>Dashboard</span>
         </a>
 
         <a class="side-link {% if request.resolver_match and request.resolver_match.url_name == 'global_users' %}active{% endif %}"
           href="{% url 'accounts:global_users' %}">
-          Usuários globais
+          <span class="material-symbols-outlined">supervisor_account</span>
+          <span>Usuários globais</span>
         </a>
 
-        <a class="side-link" href="{% url 'catalog:produto_list' %}">Produtos</a>
-        <a class="side-link" href="#">Clientes</a>
-        <a class="side-link" href="#">PCP</a>
-        <a class="side-link" href="#">Relatórios</a>
-        <a class="side-link" href="#">Configurações</a>
+        <a class="side-link" href="{% url 'catalog:produto_list' %}">
+          <span class="material-symbols-outlined">inventory_2</span>
+          <span>Produtos</span>
+        </a>
+
+        <!-- Contatos (People) -->
+        <a class="side-link {% if request.resolver_match and request.resolver_match.app_name == 'people' %}active{% endif %}"
+           href="{% url 'people:list' %}">
+          <span class="material-symbols-outlined">group</span>
+          <span>Contatos</span>
+        </a>
+
+        <a class="side-link" href="#">
+          <span class="material-symbols-outlined">precision_manufacturing</span>
+          <span>PCP</span>
+        </a>
+
+        <a class="side-link" href="#">
+          <span class="material-symbols-outlined">insights</span>
+          <span>Relatórios</span>
+        </a>
+
+        <a class="side-link" href="#">
+          <span class="material-symbols-outlined">tune</span>
+          <span>Configurações</span>
+        </a>
     </nav>
   </aside>
 
   <!-- Conteúdo principal -->
   <main class="main">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs">
+      {% block breadcrumbs %}
+        <!-- default vazio -->
+      {% endblock %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <div class="messages" style="margin-bottom: 12px;">
+        {% for m in messages %}
+          <div class="alert {% if m.tags %}{{ m.tags }}{% endif %}">
+            {{ m }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% block content %}{% endblock %}
   </main>
 </body>

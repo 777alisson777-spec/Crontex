@@ -1,0 +1,107 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Contatos{% endblock %}
+
+{% block breadcrumbs %}
+  <a href="{% url 'crontex_ui:dashboard' %}">Início</a> / <span>Contatos</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="page-title">Contatos</h1>
+    <div class="flex gap-2">
+      <a class="btn" href="{% url 'people:import' %}">Importar CSV</a>
+      <a class="btn" href="{% url 'people:import_template' %}">Baixar modelo</a>
+      <a class="btn" href="{% url 'people:export_csv' %}?bom=1">Exportar CSV</a>
+      <a class="btn primary" href="{% url 'people:create' %}">Novo contato</a>
+    </div>
+  </div>
+
+  <form method="get" class="mb-4 flex flex-wrap gap-2 items-end">
+    <input class="input" type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar por nome, email, CPF/CNPJ">
+
+    <select class="input" name="status">
+      <option value="">— Status —</option>
+      {% for key,label in status_choices %}
+        <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <div class="card subtle" style="padding:6px 10px;">
+      <span class="muted">Papéis:</span>
+      <label><input type="checkbox" name="roles" value="cliente" {% if 'cliente' in selected_roles %}checked{% endif %}> Cliente</label>
+      <label><input type="checkbox" name="roles" value="fornecedor" {% if 'fornecedor' in selected_roles %}checked{% endif %}> Fornecedor</label>
+      <label><input type="checkbox" name="roles" value="colaborador" {% if 'colaborador' in selected_roles %}checked{% endif %}> Colaborador</label>
+      <label><input type="checkbox" name="roles" value="parceiro" {% if 'parceiro' in selected_roles %}checked{% endif %}> Parceiro</label>
+    </div>
+
+    <select class="input" name="categories" multiple size="3" style="min-width:220px">
+      {% for c in all_categories %}
+        <option value="{{ c.id }}" {% if c.id|stringformat:"s" in selected_categories %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+
+    <button class="btn" type="submit">Filtrar</button>
+    <a class="btn" href="{% url 'people:list' %}">Limpar</a>
+  </form>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Tipo</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Papéis</th>
+          <th>Status</th>
+          <th class="text-right">{% if request.user.is_staff or request.user.is_superuser %}Ações{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr>
+            <td><a href="{% url 'people:detail' c.pk %}">{{ c.name|default:"—" }}</a></td>
+            <td>{{ c.get_person_kind_display|default:"—" }}</td>
+            <td>{{ c.email|default:"—" }}</td>
+            <td>{{ c.phone|default:"—" }}</td>
+            <td>
+                {% if c.is_cliente %}<span class="tag">Cliente</span>{% endif %}
+                {% if c.is_fornecedor %}<span class="tag">Fornecedor</span>{% endif %}
+                {% if c.is_colaborador %}<span class="tag">Colaborador</span>{% endif %}
+                {% if c.is_parceiro %}<span class="tag">Parceiro</span>{% endif %}
+            </td>
+            <td>{{ c.get_status_display }}</td>
+            <td class="text-right">
+                {% if request.user.is_staff or request.user.is_superuser %}
+                    <a class="btn sm" href="{% url 'people:update' c.pk %}">Editar</a>
+                    <a class="btn sm danger" href="{% url 'people:delete' c.pk %}">Excluir</a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">Nenhum contato encontrado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="pagination mt-4">
+    {% if page_obj.has_previous %}
+      <a class="page" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">«</a>
+    {% endif %}
+    <span class="page current">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="page" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">»</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
