@@ -39,12 +39,12 @@
           <span class="material-symbols-outlined">dashboard</span>
           <span>Visão geral</span>
         </a>
-
+<!--
         <a class="side-link" href="#">
           <span class="material-symbols-outlined">shopping_cart</span>
           <span>Pedidos</span>
         </a>
-
+-->
         <a class="side-link {% if request.resolver_match and request.resolver_match.url_name == 'global_dashboard' %}active{% endif %}"
           href="{% url 'accounts:global_dashboard' %}">
           <span class="material-symbols-outlined">monitoring</span>
@@ -68,7 +68,7 @@
           <span class="material-symbols-outlined">group</span>
           <span>Contatos</span>
         </a>
-
+<!--
         <a class="side-link" href="#">
           <span class="material-symbols-outlined">precision_manufacturing</span>
           <span>PCP</span>
@@ -83,6 +83,7 @@
           <span class="material-symbols-outlined">tune</span>
           <span>Configurações</span>
         </a>
+-->
     </nav>
   </aside>
 
