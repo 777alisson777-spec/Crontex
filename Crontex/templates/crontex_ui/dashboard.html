@@ -1,0 +1,172 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_overview %}active{% endblock %}
+
+{% block content %}
+<section class="kpi-grid">
+  <div class="kpi">
+    <div class="label">Pedidos hoje</div>
+    <div class="value">128 <span class="trend up">▲ +12%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Faturamento</div>
+    <div class="value">R$ 32.450 <span class="trend up">▲ +8%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Produção</div>
+    <div class="value">2.310 peças <span class="trend down">▼ -3%</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">Atrasos</div>
+    <div class="value">7 ordens</div>
+  </div>
+</section>
+
+<div style="height:18px"></div>
+
+<section class="kpi" style="padding:16px">
+  <div style="display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:8px">
+    <h2 style="margin:0">Produtos</h2>
+    <div style="display:flex; gap:8px">
+      <a class="side-link" href="{% url 'catalog:produto_list' %}">Ver todos</a>
+      <a class="btn" href="{% url 'catalog:produto_create' %}">Novo produto</a>
+    </div>
+  </div>
+
+  <!-- Mini KPIs -->
+  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:12px">
+    <div class="kpi" style="padding:12px">
+      <div class="label">Ativos</div>
+      <div class="value">{{ kpi_produtos_ativos }}</div>
+    </div>
+    <div class="kpi" style="padding:12px">
+      <div class="label">Total</div>
+      <div class="value">{{ kpi_produtos_total }}</div>
+    </div>
+    <div class="kpi" style="padding:12px">
+      <div class="label">Atualizado agora</div>
+      <div class="value">{% now "H:i" %}</div>
+    </div>
+  </div>
+
+  <!-- Grid de recentes -->
+  <div class="kpi-grid">
+    {% for p in produtos_recentes %}
+    <div class="kpi" style="display:flex; gap:12px; align-items:center; padding:12px">
+      <div style="width:64px; height:64px; border:1px solid var(--c-line); border-radius:12px; overflow:hidden; background:#fff">
+        {% if p.imagem %}
+          <img src="{{ p.imagem.url }}" alt="{{ p.nome }}" style="width:100%; height:100%; object-fit:cover">
+        {% endif %}
+      </div>
+      <div style="flex:1; min-width:0">
+        <div class="value" style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ p.nome }}</div>
+        <div class="muted" style="font-size:12px">SKU {{ p.sku }} • R$ {{ p.preco }} • Est. {{ p.estoque }}</div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <a class="side-link" href="{% url 'catalog:produto_detail' p.id %}">Abrir</a>
+          <a class="side-link" href="{% url 'catalog:produto_update' p.id %}">Editar</a>
+          {% if p.ativo %}<span class="status ok">Ativo</span>{% else %}<span class="status blocked">Inativo</span>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <div class="kpi">Sem produtos cadastrados.</div>
+    {% endfor %}
+  </div>
+</section>
+<div style="height:18px"></div>
+
+<section class="kpi" style="padding:16px">
+  <div style="display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:8px">
+    <h2 style="margin:0">Produtos</h2>
+    <div style="display:flex; gap:8px">
+      <a class="side-link" href="{% url 'catalog:produto_list' %}">Ver todos</a>
+      <a class="btn" href="{% url 'catalog:produto_create' %}">Novo produto</a>
+    </div>
+  </div>
+
+  <!-- Mini KPIs -->
+  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:12px">
+    <div class="kpi" style="padding:12px">
+      <div class="label">Ativos</div>
+      <div class="value">{{ kpi_produtos_ativos }}</div>
+    </div>
+    <div class="kpi" style="padding:12px">
+      <div class="label">Total</div>
+      <div class="value">{{ kpi_produtos_total }}</div>
+    </div>
+    <div class="kpi" style="padding:12px">
+      <div class="label">Atualizado agora</div>
+      <div class="value">{% now "H:i" %}</div>
+    </div>
+  </div>
+
+  <!-- Grid de recentes -->
+  <div class="kpi-grid">
+    {% for p in produtos_recentes %}
+    <div class="kpi" style="display:flex; gap:12px; align-items:center; padding:12px">
+      <div style="width:64px; height:64px; border:1px solid var(--c-line); border-radius:12px; overflow:hidden; background:#fff">
+        {% if p.imagem %}
+          <img src="{{ p.imagem.url }}" alt="{{ p.nome }}" style="width:100%; height:100%; object-fit:cover">
+        {% endif %}
+      </div>
+      <div style="flex:1; min-width:0">
+        <div class="value" style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ p.nome }}</div>
+        <div class="muted" style="font-size:12px">SKU {{ p.sku }} • R$ {{ p.preco }} • Est. {{ p.estoque }}</div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <a class="side-link" href="{% url 'catalog:produto_detail' p.id %}">Abrir</a>
+          <a class="side-link" href="{% url 'catalog:produto_update' p.id %}">Editar</a>
+          {% if p.ativo %}<span class="status ok">Ativo</span>{% else %}<span class="status blocked">Inativo</span>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <div class="kpi">Sem produtos cadastrados.</div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<section>
+  <h2 style="margin-bottom:12px">Ordens recentes</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nº OP</th>
+        <th>Produto</th>
+        <th>Cliente</th>
+        <th>Qtde</th>
+        <th>Prazo</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OP-4021</td>
+        <td>Camiseta Tech</td>
+        <td>Alpha</td>
+        <td>500</td>
+        <td>20/09</td>
+        <td><span class="status ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>OP-4022</td>
+        <td>Moletom Zip</td>
+        <td>Beta</td>
+        <td>300</td>
+        <td>21/09</td>
+        <td><span class="status late">Atenção</span></td>
+      </tr>
+      <tr>
+        <td>OP-4023</td>
+        <td>Legging Pro</td>
+        <td>Gamma</td>
+        <td>1500</td>
+        <td>22/09</td>
+        <td><span class="status blocked">Bloqueado</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}

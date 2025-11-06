@@ -1,0 +1,23 @@
+{% extends "base_app.html" %}
+
+{% block title %}Excluir contato{% endblock %}
+{% block breadcrumbs %}
+  <a href="{% url 'crontex_ui:dashboard' %}">Início</a> /
+  <a href="{% url 'people:list' %}">Contatos</a> /
+  <span>Excluir</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card">
+    <h1 class="card-title">Excluir contato</h1>
+    <p>Confirma excluir (soft-delete) o contato <b>#{{ object.pk }}</b> — {{ object.name|default:"(sem nome)" }}?</p>
+
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <a class="btn" href="{% url 'people:list' %}">Cancelar</a>
+      <button class="btn danger" type="submit">Excluir</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

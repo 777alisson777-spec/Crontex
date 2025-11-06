@@ -1,0 +1,311 @@
+/* ======= CATALOG.CSS (prioridade sobre core.css e app.css) ======= */
+/* Aplique este arquivo DEPOIS de core.css e app.css como já está no template. */
+/* Foco: CRUD de produtos, abas e chips tipo Bling. */
+
+/* ---------- Escopo para ganhar especificidade sem !important excessivo ---------- */
+#produto-tab-panels, .catalog-scope {}
+
+/* ===== Layout base do card/form ===== */
+#produto-tab-panels .form,
+.catalog-scope .form { margin-top: 12px; }
+
+#produto-tab-panels .form-actions,
+.catalog-scope .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px 0;
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+/* Inputs padrão */
+#produto-tab-panels .input,
+.catalog-scope .input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+#produto-tab-panels .input:focus,
+.catalog-scope .input:focus { outline: none; border-color: #111827; }
+
+/* Grade responsiva simples */
+#produto-tab-panels .grid,
+.catalog-scope .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+#produto-tab-panels .col-span-2,
+.catalog-scope .col-span-2 { grid-column: span 2; }
+#produto-tab-panels .mt-3, .catalog-scope .mt-3 { margin-top: 12px; }
+#produto-tab-panels .mb-4, .catalog-scope .mb-4 { margin-bottom: 16px; }
+
+/* Alerts */
+#produto-tab-panels .alert, .catalog-scope .alert { padding: 10px 12px; border-radius: 8px; }
+#produto-tab-panels .alert.error, .catalog-scope .alert.error { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+#produto-tab-panels .alert.info, .catalog-scope .alert.info { background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; }
+
+/* ===== Tabs estilo navegador ===== */
+.tabs { border-bottom: 1px solid #e5e7eb; margin-top: 8px; display:flex; gap:24px; }
+.tabs .tab[role="tab"] {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 10px 0;
+  margin: 0;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+}
+.tabs .tab[role="tab"]:hover { color: #0f172a; }
+.tabs .tab.is-active { color: #0f172a; border-bottom-color: #22c55e; }
+
+/* Painéis */
+.tab-panels { position: relative; overflow: visible; min-height: 200px; }
+.tab-panel { display: none; padding-top: 12px; }
+.tab-panel.is-active { display: block; }
+
+/* Lista dinâmica */
+.dynamic-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.dynamic-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dynamic-add { color: #0f172a; cursor: pointer; text-decoration: underline; font-weight: 600; }
+
+/* Botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #111827;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+}
+.btn.secondary { background: #fff; color: #111827; border-color: #e5e7eb; }
+.btn:hover { filter: brightness(0.96); }
+
+/* Tabela base */
+.table { width:100%; border-collapse: collapse; }
+.table th, .table td { border:1px solid #e5e7eb; padding:8px 10px; }
+.table th { background:#f8fafc; text-align:left; }
+
+/* ===== Chips de variação (mini card + “x” pequeno, estilo Bling) ===== */
+:root{
+  --cx-chip-bg: #f3f7ff;
+  --cx-chip-border: #dbeafe;
+  --cx-chip-text: #0f172a;
+  --cx-chip-x: #93c5fd;
+  --cx-chip-x-hover: #60a5fa;
+
+  --cx-input-border: #d1d5db;
+  --cx-input-bg: #ffffff;
+  --cx-input-radius: 10px;
+  --cx-input-padding-y: 6px;
+  --cx-input-padding-x: 10px;
+  --cx-shadow: 0 1px 1px rgba(0,0,0,.04), 0 0 0 1px rgba(15,27,49,.03) inset;
+}
+
+/* Wrapper tipo input para tokens */
+#grade-from-variations .token-input{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  min-height:40px;
+  padding:var(--cx-input-padding-y) var(--cx-input-padding-x);
+  background:var(--cx-input-bg);
+  border:1px solid var(--cx-input-border);
+  border-radius:var(--cx-input-radius);
+  box-shadow:var(--cx-shadow);
+  cursor:text;
+}
+#grade-from-variations .token-input:focus-within{ outline:2px solid rgba(59,130,246,.25); outline-offset:2px; }
+
+#grade-from-variations .token-list{ display:flex; flex-wrap:wrap; gap:6px; }
+
+/* Input real embutido */
+#grade-from-variations .token-editor{
+  flex:1 1 160px;
+  border:0;
+  background:transparent;
+  min-width:120px;
+  padding:6px 4px;
+  height:26px;
+}
+
+/* Mini card (chip) original */
+#grade-from-variations .token-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  height:26px;
+  padding:0 8px;
+  background:var(--cx-chip-bg);
+  color:var(--cx-chip-text);
+  border:1px solid var(--cx-chip-border);
+  border-radius:8px;
+  font-size:12px;
+  line-height:1;
+  user-select:none;
+}
+
+/* Botão “x” mínimo, sem fundo */
+#grade-from-variations .token-close{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--cx-chip-x);
+  font-size:14px;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+  margin-left:2px;
+}
+#grade-from-variations .token-close:hover{ color:var(--cx-chip-x-hover); }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark){
+  :root{
+    --cx-chip-bg:#0f1b31;
+    --cx-chip-border:#1f335c;
+    --cx-chip-text:#e5eefc;
+    --cx-chip-x:#8bbdff;
+    --cx-chip-x-hover:#a5ceff;
+
+    --cx-input-border:#22314f;
+    --cx-input-bg:#0b1222;
+  }
+}
+
+/* Tabela da grade alinhada ao tema */
+#grade-table .table{ width:100%; border-collapse: collapse; margin-top:6px; }
+#grade-table th, #grade-table td{
+  border:1px solid var(--cx-input-border);
+  padding:8px 10px;
+  text-align:center;
+  vertical-align:middle;
+}
+#grade-table thead th{ background:#f7fbff; font-weight:600; }
+@media (prefers-color-scheme: dark){
+  #grade-table thead th{ background:#0f1b31; }
+  #grade-table th, #grade-table td{ border-color:#22314f; }
+}
+
+/* ===== Melhoria de microinteração e contraste dos mini-chips ===== */
+#grade-from-variations .token-chip {
+  background: linear-gradient(180deg, #f8faff 0%, #f3f7ff 100%);
+  border: 1px solid #cbdafc;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: all 0.15s ease-in-out;
+}
+#grade-from-variations .token-chip:hover {
+  background: linear-gradient(180deg, #edf4ff 0%, #e8f0ff 100%);
+  border-color: #bcd3ff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+#grade-from-variations .token-close {
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+#grade-from-variations .token-close:hover {
+  transform: scale(1.15);
+}
+#grade-from-variations .token-input:focus-within .token-chip {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(96,165,250,0.4);
+}
+#grade-from-variations .token-list { gap:8px; }
+/* ===== Combobox Crontex (input único com seta e dropdown com busca) ===== */
+.combo {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.combo > .input {
+  flex: 1 1 auto;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 8px 0 0 8px;
+  border-right: 0; /* junta com a seta */
+}
+
+.combo-toggle {
+  position: relative;
+  flex: 0 0 38px;
+  border: 1px solid #e5e7eb;
+  border-left: 0;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+}
+.combo-toggle::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #374151; /* seta */
+  transform: translateY(1px);
+}
+
+.combo:focus-within > .input { border-color: #111827; }
+.combo:focus-within > .combo-toggle { border-color: #111827; }
+
+.combo-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.combo.open .combo-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.combo-panel[hidden]{ display:none; } /* fallback */
+
+.combo-search {
+  width: 100%;
+  margin-bottom: 6px;
+  border-radius: 6px;
+}
+
+.combo-list {
+  max-height: 220px;
+  overflow: auto;
+  list-style: none;
+  margin: 0; padding: 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.combo-option {
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.combo-option[aria-selected="true"],
+.combo-option:hover {
+  background: rgba(34, 197, 94, 0.10); /* verde Crontex */
+}
+.combo-empty {
+  padding: 8px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}

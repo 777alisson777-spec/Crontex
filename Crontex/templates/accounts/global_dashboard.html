@@ -1,0 +1,55 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Dashboard Global{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Dashboard Global</h1>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">Contas</div>
+      <div class="card-value">{{ total_accounts }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ativas</div>
+      <div class="card-value">{{ active_accounts }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Usuários plataforma</div>
+      <div class="card-value">{{ users_plat_total }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Staff</div>
+      <div class="card-value">{{ staff_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Superusers</div>
+      <div class="card-value">{{ superusers_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Usuários em tenants</div>
+      <div class="card-value">{{ users_tenants_distinct }}</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:16px;">Contas por plano</h2>
+  <table class="table">
+    <thead><tr><th>Plano</th><th>Qtd</th></tr></thead>
+    <tbody>
+      {% for row in per_plan %}
+        <tr><td>{{ row.plan|default:"N/A" }}</td><td>{{ row.qty }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">Sem dados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="actions" style="margin-top:16px;">
+    <a class="side-link" href="{% url 'accounts:global_users' %}">Usuários Globais</a>
+    <a class="side-link" href="{% url 'accounts:account_list' %}">Accounts</a>
+    <a class="side-link" href="{% url 'accounts:account_create' %}">Criar account</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base_app.html" %}
+
+{% block title %}Contato #{{ contact.pk }}{% endblock %}
+{% block breadcrumbs %}
+  <a href="{% url 'crontex_ui:dashboard' %}">Início</a> /
+  <a href="{% url 'people:list' %}">Contatos</a> /
+  <span>Detalhe</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="page-title">Contato: {{ contact.name|default:"—" }}</h1>
+    <div class="flex gap-2">
+        {% if request.user.is_staff or request.user.is_superuser %}
+            <a class="btn" href="{% url 'people:update' contact.pk %}">Editar</a>
+            <a class="btn danger" href="{% url 'people:delete' contact.pk %}">Excluir</a>
+        {% endif %}
+    <a class="btn" href="{% url 'people:list' %}">Voltar</a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="card">
+      <h3 class="card-title">Dados</h3>
+      <p><b>Tipo:</b> {{ contact.get_person_kind_display|default:"—" }}</p>
+      <p><b>Nome fantasia:</b> {{ contact.fantasy_name|default:"—" }}</p>
+      <p><b>CPF:</b> {{ contact.cpf|default:"—" }} &nbsp; <b>CNPJ:</b> {{ contact.cnpj|default:"—" }}</p>
+      <p><b>RG:</b> {{ contact.rg|default:"—" }} &nbsp; <b>IE:</b> {% if contact.ie_isento %}Isento{% else %}{{ contact.ie|default:"—" }}{% endif %}</p>
+      <p><b>Email:</b> {{ contact.email|default:"—" }}</p>
+      <p><b>Telefone:</b> {{ contact.phone|default:"—" }} &nbsp; <b>Alt.:</b> {{ contact.phone_alt|default:"—" }}</p>
+      <p><b>Status:</b> {{ contact.get_status_display }}</p>
+      <p><b>Papéis:</b>
+        {% if contact.is_cliente %}<span class="tag">Cliente</span>{% endif %}
+        {% if contact.is_fornecedor %}<span class="tag">Fornecedor</span>{% endif %}
+        {% if contact.is_colaborador %}<span class="tag">Colaborador</span>{% endif %}
+        {% if contact.is_parceiro %}<span class="tag">Parceiro</span>{% endif %}
+      </p>
+      <p><b>Categorias:</b>
+        {% for cat in contact.categories.all %}
+          <span class="tag">{{ cat.name }}</span>
+        {% empty %}
+          — 
+        {% endfor %}
+      </p>
+      <p><b>Observações:</b><br>{{ contact.notes|default:"—" }}</p>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Endereços</h3>
+      {% for a in contact.addresses.all %}
+        <div class="border p-2 rounded mb-2">
+          <div><b>{{ a.label|default:"Endereço" }}</b></div>
+          <div>{{ a.street|default:"" }} {{ a.number|default:"" }} {{ a.complement|default:"" }}</div>
+          <div>{{ a.district|default:"" }} — {{ a.city|default:"" }}/{{ a.uf|default:"" }}</div>
+          <div>CEP: {{ a.cep|default:"—" }} • {{ a.country|default:"" }}</div>
+        </div>
+      {% empty %}
+        <p class="text-muted">Nenhum endereço cadastrado.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

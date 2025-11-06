@@ -1,0 +1,48 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}{% if token %}Editar{% else %}Novo{% endif %} Token{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>{% if token %}Editar{% else %}Novo{% endif %} Token</h1>
+
+  {% if show_secret and raw_key_once %}
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-title">Chave gerada (copie agora)</div>
+      <div class="card-value" style="word-break:break-all;">{{ raw_key_once }}</div>
+      <small>Segurança: essa chave não será mostrada novamente.</small>
+    </div>
+  {% endif %}
+
+  <form method="post" class="form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-row">
+      <label>Nome</label>
+      {{ form.name }} {{ form.name.errors }}
+    </div>
+
+    <div class="form-row">
+      <label>Account (opcional)</label>
+      {{ form.account }} {{ form.account.errors }}
+    </div>
+
+    <div class="form-row">
+      <label>Status</label>
+      {{ form.is_active }} {{ form.is_active.errors }}
+    </div>
+
+    <div class="form-row">
+      <label>Escopos (JSON)</label>
+      {{ form.scopes_json }} {{ form.scopes_json.errors }}
+    </div>
+
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn" type="submit">Salvar</button>
+      <a class="btn" href="{% url 'accounts:token_list' %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

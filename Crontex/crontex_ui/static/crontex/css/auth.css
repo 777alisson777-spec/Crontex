@@ -1,0 +1,60 @@
+/* AUTH FLOW ONLY
+   Depende de core.css (tokens, reset, tipografia)
+   Não misture regras de dashboard aqui.  */
+
+/* Ritmo visual unificado */
+:root { --control-h: 52px; }
+
+/* Cartão de autenticação */
+.card{
+  width:420px; max-width:94vw; margin:6vh auto; background:#fff;
+  border-radius:var(--radius); padding:28px 24px 30px; box-shadow:var(--shadow);
+}
+
+/* Branding visual (sem texto) */
+.logo{ display:block; margin:4px auto 18px; width:160px }
+
+/* Inputs */
+.input{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid var(--c-line); border-radius:14px;
+  padding:0 14px; background:#fff; height:var(--control-h);
+}
+.input input{ border:none; outline:0; width:100%; font-size:16px; height:100% }
+
+/* CTA principal proporcional aos inputs e ao card */
+.btn-lg{
+  height:var(--control-h);
+  width:100%;
+  font-size:16px;
+  border-radius:14px;
+}
+
+/* Links utilitários */
+.inline{ color:var(--c-navy); text-decoration:none; font-weight:700 }
+.inline:hover{ text-decoration:underline }
+.row{ display:flex; justify-content:space-between; gap:10px; align-items:center; margin:12px 0 8px }
+
+/* Divisor */
+.hr{ display:flex; align-items:center; gap:12px; color:#7b8896 }
+.hr::before, .hr::after{ content:""; height:1px; background:var(--c-line); flex:1 }
+
+/* Botões de OAuth com ícones oficiais (SVG inline no HTML) */
+.btn-oauth{
+  display:flex; align-items:center; gap:12px;
+  border:1px solid var(--c-line); background:#fff; border-radius:14px;
+  padding:12px 14px; font-weight:600; width:100%; justify-content:center
+}
+.btn-oauth .icon{ display:inline-flex; width:20px; height:20px }
+.btn-oauth:hover{ box-shadow:0 8px 20px rgba(6,27,66,.08) }
+
+/* Rodapé auxiliar */
+.footer-note{ color:#9aa7b4; font-size:12px; text-align:center; margin-top:10px }
+
+/* Acessibilidade mínima */
+:focus-visible{ outline:2px solid var(--c-orange); outline-offset:2px }
+
+/* Responsividade fina */
+@media (max-width:420px){
+  .card{ margin:4vh auto; padding:22px 18px 24px }
+}

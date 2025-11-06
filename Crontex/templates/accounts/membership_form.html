@@ -1,0 +1,32 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Membro da conta{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>{% if member %}Editar{% else %}Novo{% endif %} membro — {{ request.account.name }}</h1>
+
+  <form method="post" class="form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-row">
+      <label>Usuário</label>
+      {{ form.user }}
+      {{ form.user.errors }}
+    </div>
+
+    <div class="form-row">
+      <label>Papel</label>
+      {{ form.role }}
+      {{ form.role.errors }}
+    </div>
+
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn" type="submit">Salvar</button>
+      <a class="btn" href="{% url 'accounts:member_list' %}?account={{ request.account.slug }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

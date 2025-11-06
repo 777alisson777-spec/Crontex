@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}Entrar • CRONTEX{% endblock %}
+{% block bodyclass %}{{ block.super }} login crontex-admin{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- usar os MESMOS paths do /entrar -->
+  <link rel="stylesheet" href="{% static 'css/core.css' %}">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block branding %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <img class="logo" src="{% static 'img/logo.jpeg' %}" alt="CRONTEX" />
+    <h1 class="brand">CRONTEX</h1>
+
+    {% if form.errors or form.non_field_errors %}
+      <div class="auth-alert">
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        {% else %}
+          <div>{% trans "Usuário ou senha incorretos." %}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next|default:'/global/' }}">
+
+      <div class="input">
+        <!-- Usuário: ícone marinho -->
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-5.33 0-8 2.67-8 6v1h16v-1c0-3.33-2.67-6-8-6Z" fill="currentColor"/>
+        </svg>
+        {{ form.username }}
+      </div>
+
+      <div class="input">
+        <!-- Senha: ícone marinho -->
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M17 10h-1V7a4 4 0 0 0-8 0v3H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Zm-6 0V7a3 3 0 1 1 6 0v3h-6Z" fill="currentColor"/>
+        </svg>
+        {{ form.password }}
+      </div>
+
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+
+    <div class="row">
+      <a class="inline" href="{% url 'crontex_ui:signup' %}">Criar conta</a>
+      <a class="inline" href="{% url 'crontex_ui:password_reset' %}">Esqueci minha senha</a>
+    </div>
+
+    <div class="hr">ou entre com</div>
+    <button class="btn-oauth" type="button" aria-label="Entrar com Google">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.9 29.3 36 24 36 16.8 36 11 30.2 11 23s5.8-13 13-13c3.3 0 6.3 1.2 8.6 3.3l5.7-5.7C34.5 4.4 29.5 2 24 2 12.3 2 3 11.3 3 23s9.3 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.3 18.9 12 24 12c3.3 0 6.3 1.2 8.6 3.3l5.7-5.7C34.5 4.4 29.5 2 24 2 16.1 2 9.3 6.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10.1-2 13.8-5.2l-6.4-5.3C29.2 35.3 26.8 36 24 36c-5.2 0-9.6-3.4-11.2-8.1l-6.4 5C9.3 41.5 16.1 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-3 5.2-5.6 6.9l6.4 5.3C38.7 37.9 41 32.8 41 27c0-2.2-.4-4.3-1.4-6.5z"/></svg>
+      Entrar com Google
+    </button>
+
+    <div class="footer-note">Acesso restrito a usuários administrativos.</div>
+  </div>
+{% endblock %}

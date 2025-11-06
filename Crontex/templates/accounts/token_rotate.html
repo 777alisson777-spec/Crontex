@@ -1,0 +1,20 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Chave Rotacionada{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Chave Rotacionada</h1>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Nova chave (copie agora)</div>
+    <div class="card-value" style="word-break:break-all;">{{ raw_key_once }}</div>
+    <small>Essa chave não será mostrada novamente.</small>
+  </div>
+
+  <div class="actions">
+    <a class="btn" href="{% url 'accounts:token_list' %}">Voltar</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+# Use LF em texto; preserve binários
+* text=auto eol=lf
+
+# Python / Django
+*.py   text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+
+# Arquivos binários (não converter EOL)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.woff2 binary
+*.woff  binary
+*.ttf   binary
+*.eot   binary

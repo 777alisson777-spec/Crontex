@@ -1,0 +1,217 @@
+/* =========================
+   Crontex Admin Skin (Django)
+   ========================= */
+
+/* Tokens base (fallback caso core.css não defina) */
+:root{
+  --cx-bg: #ffffff;
+  --cx-bg-alt: #f8fafc;
+  --cx-card: #ffffff;
+  --cx-border: #e5e7eb;
+  --cx-text: #0f172a;
+  --cx-muted: #6b7280;
+  --cx-primary: #3b82f6;
+  --cx-primary-ink: #0b3a8a;
+  --cx-radius: 12px;
+  --cx-shadow: 0 6px 20px rgba(2,6,23,0.06);
+}
+
+/* Base + tipografia */
+.crontex-admin body,
+body.crontex-admin {
+  background: var(--cx-bg-alt);
+  color: var(--cx-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.crontex-admin a { color: var(--cx-primary); }
+.crontex-admin a:hover { color: var(--cx-primary-ink); }
+
+/* Header */
+.crontex-admin #header {
+  background: var(--cx-bg) !important;
+  border-bottom: 1px solid var(--cx-border) !important;
+  padding: 12px 20px;
+}
+.crontex-admin #header .branding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.crontex-admin #header .branding img {
+  height: 28px !important;
+  width: auto !important;
+  max-width: 28px !important;
+  object-fit: contain;
+}
+.crontex-admin #branding #site-name a {
+  color: var(--cx-text) !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+.crontex-admin #user-tools a { color: var(--cx-muted) !important; }
+
+/* Conteúdo */
+.crontex-admin #content { padding: 24px; }
+
+/* Módulos / cards */
+.crontex-admin .module,
+.crontex-admin .dashboard .module,
+.crontex-admin .app-auth .module,
+.crontex-admin .app-accounts .module {
+  background: var(--cx-card) !important;
+  border: 1px solid var(--cx-border) !important;
+  border-radius: var(--cx-radius);
+  box-shadow: var(--cx-shadow);
+}
+.crontex-admin .module h2,
+.crontex-admin .inline-group h2,
+.crontex-admin .module caption {
+  color: var(--cx-text) !important;
+  background: transparent !important;
+  border-bottom: 1px solid var(--cx-border) !important;
+  font-weight: 700;
+}
+
+/* Tabelas */
+.crontex-admin table { border-color: var(--cx-border) !important; }
+.crontex-admin table thead th {
+  background: var(--cx-bg) !important;
+  color: var(--cx-muted) !important;
+  border-bottom: 1px solid var(--cx-border) !important;
+  font-weight: 600;
+}
+.crontex-admin table tbody tr:nth-child(odd) { background: var(--cx-bg-alt) !important; }
+.crontex-admin table tbody tr:hover { background: #eef2ff !important; }
+
+/* Breadcrumbs */
+.crontex-admin div.breadcrumbs {
+  background: var(--cx-card) !important;
+  border-bottom: 1px solid var(--cx-border) !important;
+  color: var(--cx-muted) !important;
+}
+
+/* Botões */
+.crontex-admin .button,
+.crontex-admin input[type="submit"],
+.crontex-admin .object-tools a,
+.crontex-admin .submit-row input {
+  background: var(--cx-primary) !important;
+  color: #fff !important;
+  border: 1px solid var(--cx-primary) !important;
+  border-radius: var(--cx-radius) !important;
+  box-shadow: var(--cx-shadow) !important;
+  padding: 8px 14px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+.crontex-admin .button:hover,
+.crontex-admin input[type="submit"]:hover,
+.crontex-admin .object-tools a:hover,
+.crontex-admin .submit-row input:hover {
+  filter: brightness(.96);
+}
+.crontex-admin .deletelink { background: #ef4444 !important; border-color: #ef4444 !important; }
+
+/* Inputs */
+.crontex-admin select,
+.crontex-admin input[type="text"],
+.crontex-admin input[type="email"],
+.crontex-admin input[type="number"],
+.crontex-admin input[type="password"],
+.crontex-admin textarea {
+  border: 1px solid var(--cx-border) !important;
+  border-radius: 10px !important;
+  padding: 8px 10px !important;
+  background: #fff !important;
+  color: var(--cx-text) !important;
+}
+
+/* Submit row */
+.crontex-admin .submit-row {
+  background: var(--cx-bg) !important;
+  border-top: 1px solid var(--cx-border) !important;
+  border-radius: var(--cx-radius) !important;
+}
+
+/* Mensagens */
+.crontex-admin ul.messagelist li {
+  border-radius: var(--cx-radius) !important;
+  border: 1px solid var(--cx-border) !important;
+  box-shadow: var(--cx-shadow) !important;
+}
+
+/* ---------------------------
+   Login do Admin = visual /entrar
+   --------------------------- */
+
+/* Remove chrome do admin no login */
+body.login.crontex-admin #header,
+body.login.crontex-admin .breadcrumbs { display: none !important; }
+
+/* Layout card */
+body.login.crontex-admin #content { padding: 0 !important; }
+body.login.crontex-admin .auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--cx-bg-alt);
+}
+body.login.crontex-admin .auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid var(--cx-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(2,6,23,.08);
+  padding: 24px;
+}
+body.login.crontex-admin .auth-header { text-align: center; margin-bottom: 12px; }
+body.login.crontex-admin .auth-logo { height: 36px; width: auto; border-radius: 8px; }
+body.login.crontex-admin .auth-title { margin: 10px 0 2px; font-size: 22px; font-weight: 700; }
+body.login.crontex-admin .auth-subtitle { margin: 0; color: #6b7280; font-size: 14px; }
+
+/* Alert */
+body.login.crontex-admin .auth-alert {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 10px;
+}
+
+/* Form */
+body.login.crontex-admin .auth-form { display: flex; flex-direction: column; }
+body.login.crontex-admin .auth-label { font-weight: 600; font-size: 13px; color: #374151; margin-bottom: 4px; }
+body.login.crontex-admin .auth-input,
+body.login.crontex-admin input[name="username"],
+body.login.crontex-admin input[name="password"] {
+  border: 1px solid var(--cx-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+body.login.crontex-admin .auth-btn {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--cx-primary);
+  background: var(--cx-primary);
+  color: #fff;
+  font-weight: 700;
+}
+body.login.crontex-admin .auth-btn:hover { filter: brightness(.96); }
+body.login.crontex-admin .auth-footer { margin-top: 14px; text-align: center; }
+
+/* ---------------------------
+   Ajustes extra
+   --------------------------- */
+
+/* Object tools alinhado */
+.crontex-admin .object-tools { margin: 0 0 12px 0; }
+.crontex-admin .object-tools li { margin-left: 8px; }
+
+/* Evita cascata antiga no dashboard */
+.crontex-admin .dashboard .module .module h2 { background: transparent !important; }

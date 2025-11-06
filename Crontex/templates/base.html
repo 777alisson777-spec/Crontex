@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Crontex{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static 'crontex/css/crontex.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
+
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <a class="sr-only" href="#main">Pular para conteúdo</a>
+
+  <header class="nav" role="banner">
+    <div class="nav-inner">
+      <img src="{% static 'img/logo.jpeg' %}" alt="Crontex" style="height:28px">
+      {% block header_actions %}{% endblock %}
+    </div>
+  </header>
+
+  <main id="main" role="main">
+    {% if messages %}
+      <section aria-label="Avisos" class="card" style="width: 680px">
+        {% for message in messages %}
+          <p class="{% if message.tags %}{{ message.tags }}{% else %}muted{% endif %}">{{ message }}</p>
+        {% endfor %}
+      </section>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

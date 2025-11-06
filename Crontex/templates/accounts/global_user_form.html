@@ -1,0 +1,52 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}{{ target_user|default:"Novo" }} Usuário Global{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>{% if target_user %}Editar{% else %}Novo{% endif %} Usuário Global</h1>
+
+  <form method="post" class="form">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Dados do usuário</legend>
+      {{ uform.non_field_errors }}
+      <div class="form-row">
+        <label>Username</label>
+        {{ uform.username }} {{ uform.username.errors }}
+      </div>
+      <div class="form-row">
+        <label>Email</label>
+        {{ uform.email }} {{ uform.email.errors }}
+      </div>
+      <div class="form-row">
+        <label>Ativo</label>
+        {{ uform.is_active }} {{ uform.is_active.errors }}
+      </div>
+      <div class="form-row">
+        <label>Staff</label>
+        {{ uform.is_staff }} {{ uform.is_staff.errors }}
+      </div>
+    </fieldset>
+
+    <fieldset style="margin-top:16px;">
+      <legend>Papel no dashboard global</legend>
+      {{ rform.non_field_errors }}
+      <div class="form-row">
+        <label>Role</label>
+        {{ rform.role }} {{ rform.role.errors }}
+      </div>
+    </fieldset>
+
+    <div class="actions" style="margin-top:16px;">
+      {% if can_write %}
+        <button class="btn" type="submit">Salvar</button>
+      {% else %}
+        <span class="muted">Somente leitura</span>
+      {% endif %}
+      <a class="btn" href="{% url 'accounts:global_users' %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

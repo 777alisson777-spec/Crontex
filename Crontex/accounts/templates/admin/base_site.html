@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}CRONTEX · Admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'crontex/css/core.css' %}">
+<link rel="stylesheet" href="{% static 'crontex/css/app.css' %}">
+<link rel="stylesheet" href="{% static 'crontex/css/admin.css' %}">
+{% endblock %}
+
+{% block bodyclass %}crontex-admin{% endblock %}
+
+{% block branding %}
+  <div class="branding">
+    <a href="/global/">
+      <img src="{% static 'crontex/img/logo.jpeg' %}" alt="Crontex">
+      <span>CRONTEX · Admin</span>
+    </a>
+  </div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

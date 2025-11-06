@@ -1,0 +1,189 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Contato{% endblock %}
+{% block breadcrumbs %}
+  <a href="{% url 'crontex_ui:dashboard' %}">Início</a> /
+  <a href="{% url 'people:list' %}">Contatos</a> /
+  <span>{% if object %}Editar{% else %}Novo{% endif %}</span>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="page-title">{% if object %}Editar{% else %}Novo{% endif %} Contato</h1>
+    <div class="flex gap-2">
+      <a class="btn" href="{% url 'people:list' %}">Voltar</a>
+      {% if object %}<a class="btn danger" href="{% url 'people:delete' object.pk %}">Excluir</a>{% endif %}
+    </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="card">
+        <h3 class="card-title">Identificação</h3>
+        <div class="form-field">
+          <label>Nome / Razão social</label>
+          {{ form.name }}
+          {{ form.name.errors }}
+        </div>
+        <div class="form-field">
+          <label>Nome fantasia</label>
+          {{ form.fantasy_name }}
+          {{ form.fantasy_name.errors }}
+        </div>
+        <div class="form-field">
+          <label>Tipo de pessoa</label>
+          {{ form.person_kind }}
+          {{ form.person_kind.errors }}
+        </div>
+        <div class="form-field">
+            <label>Papéis</label>
+            <div class="chip-group">
+                <label class="chip"><span>{{ form.is_cliente }}</span> Cliente</label>
+                <label class="chip"><span>{{ form.is_fornecedor }}</span> Fornecedor</label>
+                <label class="chip"><span>{{ form.is_colaborador }}</span> Colaborador</label>
+                <label class="chip"><span>{{ form.is_parceiro }}</span> Parceiro</label>
+            </div>
+            {{ form.is_cliente.errors }}{{ form.is_fornecedor.errors }}{{ form.is_colaborador.errors }}{{ form.is_parceiro.errors }}
+        </div>
+        <div class="form-field">
+          <label>Categorias</label>
+          {{ form.categories }}
+          {{ form.categories.errors }}
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Documentos</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="form-field">
+            <label>CPF</label>
+            {{ form.cpf }} {{ form.cpf.errors }}
+          </div>
+          <div class="form-field">
+            <label>CNPJ</label>
+            {{ form.cnpj }} {{ form.cnpj.errors }}
+          </div>
+          <div class="form-field">
+            <label>RG</label>
+            {{ form.rg }} {{ form.rg.errors }}
+          </div>
+          <div class="form-field">
+            <label>IE</label>
+            {{ form.ie }} {{ form.ie.errors }}
+          </div>
+          <div class="form-field">
+            <label class="flex items-center gap-2">{{ form.ie_isento }} IE Isento</label>
+            {{ form.ie_isento.errors }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Contato</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div class="form-field">
+            <label>E-mail</label>
+            {{ form.email }} {{ form.email.errors }}
+          </div>
+          <div class="form-field">
+            <label>Telefone</label>
+            {{ form.phone }} {{ form.phone.errors }}
+          </div>
+          <div class="form-field">
+            <label>Telefone alternativo</label>
+            {{ form.phone_alt }} {{ form.phone_alt.errors }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="form-field">
+            <label>Status</label>
+            {{ form.status }} {{ form.status.errors }}
+          </div>
+          <div class="form-field">
+            <label>Observações</label>
+            {{ form.notes }} {{ form.notes.errors }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endereços (Formset) -->
+    <div class="card mt-4">
+      <div class="flex items-center justify-between">
+        <h3 class="card-title">Endereços</h3>
+        <button type="button" id="addr-add" class="btn sm">+ Endereço</button>
+      </div>
+
+      {{ formset.management_form }}
+      <div id="addr-forms" class="space-y-3">
+        {% for f in formset.forms %}
+        <div class="card subtle addr-item" data-index="{{ forloop.counter0 }}">
+          <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
+            <div class="form-field md:col-span-2">
+              <label>Rótulo</label>
+              {{ f.label }} {{ f.label.errors }}
+            </div>
+            <div class="form-field">
+              <label>CEP</label>
+              {{ f.cep }} {{ f.cep.errors }}
+            </div>
+            <div class="form-field md:col-span-3">
+              <label>Logradouro</label>
+              {{ f.street }} {{ f.street.errors }}
+            </div>
+
+            <div class="form-field">
+              <label>Número</label>
+              {{ f.number }} {{ f.number.errors }}
+            </div>
+            <div class="form-field md:col-span-2">
+              <label>Complemento</label>
+              {{ f.complement }} {{ f.complement.errors }}
+            </div>
+            <div class="form-field">
+              <label>Bairro</label>
+              {{ f.district }} {{ f.district.errors }}
+            </div>
+            <div class="form-field">
+              <label>Cidade</label>
+              {{ f.city }} {{ f.city.errors }}
+            </div>
+            <div class="form-field">
+              <label>UF</label>
+              {{ f.uf }} {{ f.uf.errors }}
+            </div>
+            <div class="form-field">
+              <label>País</label>
+              {{ f.country }} {{ f.country.errors }}
+            </div>
+          </div>
+
+          {% if f.DELETE %}
+          <div class="flex justify-end mt-2">
+            <label class="flex items-center gap-2 text-danger">
+              {{ f.DELETE }} Remover este endereço
+            </label>
+          </div>
+          {% endif %}
+
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mt-4 flex justify-end gap-2">
+      <a class="btn" href="{% url 'people:list' %}">Cancelar</a>
+      <button class="btn primary" type="submit">Salvar</button>
+    </div>
+  </form>
+</div>
+<script src="{% static 'crontex/js/people_form.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "include": ["."],
+  "reportUnknownArgumentType": "warning",
+  "reportAttributeAccessIssue": "warning",
+  "exclude": [],
+  "executionEnvironments": [
+    { "root": "people", "reportUnknownArgumentType": "none" }
+  ]
+}
