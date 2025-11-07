@@ -102,8 +102,8 @@ LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_TZ = True
 
-ALLOWED_HOSTS = []  # durante dev, vazio funciona no localhost
-
+from decouple import config, Csv  # (se já existir, ignore)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost,dev.crontex.com.br", cast=Csv())
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
