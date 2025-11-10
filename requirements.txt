@@ -1,5 +1,8 @@
-asgiref==3.9.1
 Django==5.2.6
+asgiref==3.9.1
 sqlparse==0.5.3
 tzdata==2025.2
 python-decouple
+dj-database-url==3.0.1
+openai>=1.50
+requests>=2.32
