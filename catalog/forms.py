@@ -168,6 +168,16 @@ class ProductForm(forms.ModelForm):
     os_modelagem = forms.CharField(label="Modelagem", max_length=150, required=False)  # <- pessoa
     os_pilotagem = forms.CharField(label="Pilotagem", max_length=150, required=False)  # <- pessoa
     os_encaixe = forms.CharField(label="Encaixe", max_length=150, required=False)      # <- pessoa
+    os_desenho_tecnico = forms.FileField(
+        required=False,
+        label="Desenho técnico",
+        widget=forms.ClearableFileInput(attrs={"accept": ".png,.jpg,.jpeg,.svg,.pdf"})
+    )
+    os_artes = forms.FileField(
+        required=False,
+        label="Artes/estampa",
+        widget=forms.ClearableFileInput(attrs={"accept": ".png,.jpg,.jpeg,.svg"})
+    )
 
     # ===================== ABA: MANUFATURA =====================
     m_corte = forms.CharField(label="Corte", max_length=150, required=False)           # <- pessoa

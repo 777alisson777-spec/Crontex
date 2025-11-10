@@ -309,3 +309,18 @@
   color: #6b7280;
   font-size: 0.9rem;
 }
+/* ---- feedback de validação ---- */
+.alert.danger {
+  background: #fde8e8;
+  border: 1px solid #f5c2c7;
+  color: #842029;
+  padding: .8rem;
+  border-radius: .5rem;
+  margin-bottom: 1rem;
+}
+
+.field-error {
+  color: #b42318;
+  font-size: .85rem;
+  margin: .25rem 0 .5rem;
+}

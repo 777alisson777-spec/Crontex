@@ -97,6 +97,12 @@ class ProductVariant(models.Model):
     created_at = models.DateTimeField("Criado em", auto_now_add=True)
     updated_at = models.DateTimeField("Atualizado em", auto_now=True)
 
+    # ao final dos campos já existentes
+    image_real_url   = models.CharField(max_length=500, blank=True, null=True)  # ex: /media/mockups/sku_realista.jpg
+    desc_short       = models.CharField(max_length=240, blank=True, null=True)
+    desc_medium      = models.TextField(blank=True, null=True)
+
+
     class Meta:
         indexes = [
             models.Index(fields=["product"]),

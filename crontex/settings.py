@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv())
+OPENAI_API_KEY = config("OPENAI_API_KEY", default=None)
 
 
 # Application definition
@@ -133,3 +134,14 @@ else:
     EMAIL_HOST_USER = "usuario@dominio.com"
     EMAIL_HOST_PASSWORD = "sua_senha"
     DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"basic": {"format": "%(asctime)s %(levelname)s %(name)s :: %(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "basic"}},
+    "loggers": {
+        "crontex.app": {"handlers": ["console"], "level": "DEBUG"},
+        "django.request": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}

@@ -1,0 +1,1 @@
+def err(msg: str, **kv: Any) - get_logger().error(_fmt(msg, kv))

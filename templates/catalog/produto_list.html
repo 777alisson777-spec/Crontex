@@ -3,6 +3,16 @@
 {% load static %}
 {% block title %}Produtos{% endblock %}
 
+{% if messages %}
+  <div class="container" style="margin:12px 0">
+    {% for message in messages %}
+      <div class="alert {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 {% block content %}
 <div class="container catalog-scope">
   <div class="card">
@@ -10,8 +20,12 @@
 
     <div class="form-actions mb-3">
       <a class="btn" href="{% url 'catalog:produto_create' %}">+ Novo Produto</a>
-      <a class="btn secondary" href="{% url 'catalog:produto_import' %}">Importar do Bling</a>
+      <label for="arquivo-csv" class="btn secondary" style="cursor:pointer">Importar do Bling</label>
     </div>
+    <form id="form-importar" action="{% url 'catalog:produto_import' %}" method="post" enctype="multipart/form-data" style="display:none">
+      {% csrf_token %}
+      <input type="file" id="arquivo-csv" name="arquivo" accept=".csv,text/csv" onchange="this.form.submit()" />
+    </form>
 
     {% if object_list %}
       <div class="table-wrapper">
@@ -73,4 +87,23 @@
     {% endif %}
   </div>
 </div>
+<script>
+  (function () {
+    const btn = document.getElementById('btn-importar');
+    const form = document.getElementById('form-importar');
+    const file = document.getElementById('arquivo-csv');
+    if (!btn || !form || !file) return;
+
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      file.click();
+    });
+
+    file.addEventListener('change', function () {
+      if (file.files && file.files.length > 0) {
+        form.submit();
+      }
+    });
+  })();
+</script>
 {% endblock %}

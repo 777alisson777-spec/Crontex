@@ -8,8 +8,21 @@
   <div class="card">
     <div class="card-title">{{ form.instance.pk|yesno:"Editar produto,Novo produto" }}</div>
 
+    {# resumo dos erros do form #}
     {% if form.errors %}
-      <div class="alert error" role="alert">Revise os campos destacados.</div>
+    <div class="alert danger" role="alert">
+      <strong>Preencha os campos obrigatórios:</strong>
+      <ul>
+        {% for field in form %}
+          {% for error in field.errors %}
+            <li>{{ field.label }} — {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
     {% endif %}
 
     <nav class="tabs" role="tablist" aria-label="Abas do produto">
@@ -23,7 +36,7 @@
       <button type="button" class="tab" role="tab" aria-selected="false" tabindex="-1" data-tab="av-acab">Aviamentos Acabamento</button>
     </nav>
 
-    <form method="post" id="produto-form" class="form">
+    <form method="post" id="produto-form" class="form" enctype="multipart/form-data">
       {% csrf_token %}
       {{ form.non_field_errors }}
       {{ form.form_uid }}
@@ -32,10 +45,8 @@
         <!-- PEDIDO -->
         <section class="tab-panel is-active" role="tabpanel" data-tab="pedido">
           <div class="grid">
-            <!-- Requisitante (pessoa) -->
             <div>
               <label for="id_pedido_requisitante">Requisitante:</label>
-              <!-- Combobox declarativa (envolve o input existente) -->
               <div data-combo data-role="REQUISITANTE"
                    data-txt="#id_pedido_requisitante"
                    data-hid="#id_pedido_requisitante_id"></div>
@@ -43,7 +54,6 @@
               <input type="text" name="pedido_requisitante" maxlength="150" class="input" id="id_pedido_requisitante" autocomplete="off">
             </div>
 
-            <!-- Cliente (pessoa) -->
             <div>
               <label for="id_pedido_cliente">Cliente:</label>
               <div data-combo data-role="CLIENTE"
@@ -53,7 +63,6 @@
               <input type="text" name="pedido_cliente" maxlength="150" class="input" id="id_pedido_cliente" autocomplete="off">
             </div>
 
-            <!-- Status -->
             <div>
               <label for="id_pedido_status">Status:</label>
               <input type="text" name="pedido_status" maxlength="80" class="input" id="id_pedido_status" autocomplete="off">
@@ -75,7 +84,6 @@
         <!-- OS -->
         <section class="tab-panel" role="tabpanel" data-tab="os">
           <div class="grid">
-            <!-- Estilo (pessoa) -->
             <div>
               <label for="id_os_estilo">Estilo:</label>
               <div class="combo" data-combo data-role="ESTILISTA">
@@ -83,9 +91,9 @@
                 {{ form.os_estilo }}
                 <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
               </div>
+              {% if form.os_estilo.errors %}<div class="field-error">{{ form.os_estilo.errors.0 }}</div>{% endif %}
             </div>
 
-            <!-- Arte (pessoa) -->
             <div>
               <label for="id_os_arte">Arte:</label>
               <div class="combo" data-combo data-role="ARTE">
@@ -93,9 +101,22 @@
                 {{ form.os_arte }}
                 <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
               </div>
+              {% if form.os_arte.errors %}<div class="field-error">{{ form.os_arte.errors.0 }}</div>{% endif %}
             </div>
 
-            <!-- Modelagem (pessoa) -->
+            <!-- Uploads p/ IA -->
+            <div class="field">
+              <label class="label">Desenho técnico (PNG/JPG/SVG/PDF)</label>
+              {{ form.os_desenho_tecnico }}
+              {% if form.os_desenho_tecnico.errors %}<div class="field-error">{{ form.os_desenho_tecnico.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="field">
+              <label class="label">Artes / estampa (PNG/JPG/SVG)</label>
+              {{ form.os_artes }}
+              {% if form.os_artes.errors %}<div class="field-error">{{ form.os_artes.errors.0 }}</div>{% endif %}
+            </div>
+
             <div>
               <label for="id_os_modelagem">Modelagem:</label>
               <div class="combo" data-combo data-role="MODELAGEM">
@@ -103,9 +124,9 @@
                 {{ form.os_modelagem }}
                 <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
               </div>
+              {% if form.os_modelagem.errors %}<div class="field-error">{{ form.os_modelagem.errors.0 }}</div>{% endif %}
             </div>
 
-            <!-- Pilotagem (pessoa) -->
             <div>
               <label for="id_os_pilotagem">Pilotagem:</label>
               <div class="combo" data-combo data-role="PILOTAGEM">
@@ -113,9 +134,9 @@
                 {{ form.os_pilotagem }}
                 <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
               </div>
+              {% if form.os_pilotagem.errors %}<div class="field-error">{{ form.os_pilotagem.errors.0 }}</div>{% endif %}
             </div>
 
-            <!-- Encaixe (pessoa) -->
             <div>
               <label for="id_os_encaixe">Encaixe:</label>
               <div class="combo" data-combo data-role="ENCAIXE">
@@ -123,6 +144,7 @@
                 {{ form.os_encaixe }}
                 <button type="button" class="combo-toggle" aria-haspopup="listbox" aria-expanded="false"></button>
               </div>
+              {% if form.os_encaixe.errors %}<div class="field-error">{{ form.os_encaixe.errors.0 }}</div>{% endif %}
             </div>
           </div>
         </section>
@@ -142,42 +164,41 @@
           </div>
 
           <div class="grid">
-            <div>{{ form.external_id.label_tag }} {{ form.external_id }}</div>
-            <div>{{ form.sku.label_tag }} {{ form.sku }}</div>
-            <div>{{ form.name.label_tag }} {{ form.name }}</div>
+            <div>{{ form.external_id.label_tag }} {{ form.external_id }}{% if form.external_id.errors %}<div class="field-error">{{ form.external_id.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.sku.label_tag }} {{ form.sku }}{% if form.sku.errors %}<div class="field-error">{{ form.sku.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.name.label_tag }} {{ form.name }}{% if form.name.errors %}<div class="field-error">{{ form.name.errors.0 }}</div>{% endif %}</div>
 
-            <div>{{ form.origin.label_tag }} {{ form.origin }}</div>
-            <div>{{ form.status.label_tag }} {{ form.status }}</div>
-            <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
+            <div>{{ form.origin.label_tag }} {{ form.origin }}{% if form.origin.errors %}<div class="field-error">{{ form.origin.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.status.label_tag }} {{ form.status }}{% if form.status.errors %}<div class="field-error">{{ form.status.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.is_active.label_tag }} {{ form.is_active }}{% if form.is_active.errors %}<div class="field-error">{{ form.is_active.errors.0 }}</div>{% endif %}</div>
 
-            <div>{{ form.price.label_tag }} {{ form.price }}</div>
-            <div>{{ form.cost_price.label_tag }} {{ form.cost_price }}</div>
-            <div>{{ form.purchase_price.label_tag }} {{ form.purchase_price }}</div>
-            <div>{{ form.stock_qty.label_tag }} {{ form.stock_qty }}</div>
+            <div>{{ form.price.label_tag }} {{ form.price }}{% if form.price.errors %}<div class="field-error">{{ form.price.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.cost_price.label_tag }} {{ form.cost_price }}{% if form.cost_price.errors %}<div class="field-error">{{ form.cost_price.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.purchase_price.label_tag }} {{ form.purchase_price }}{% if form.purchase_price.errors %}<div class="field-error">{{ form.purchase_price.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.stock_qty.label_tag }} {{ form.stock_qty }}{% if form.stock_qty.errors %}<div class="field-error">{{ form.stock_qty.errors.0 }}</div>{% endif %}</div>
 
-            <div>{{ form.ncm.label_tag }} {{ form.ncm }}</div>
-            <div>{{ form.cest.label_tag }} {{ form.cest }}</div>
-            <div>{{ form.ipi_fixed.label_tag }} {{ form.ipi_fixed }}</div>
-            <div>{{ form.icms_st_base_retencao.label_tag }} {{ form.icms_st_base_retencao }}</div>
-            <div>{{ form.icms_st_valor_retencao.label_tag }} {{ form.icms_st_valor_retencao }}</div>
-            <div>{{ form.icms_proprio_substituto.label_tag }} {{ form.icms_proprio_substituto }}</div>
-            <div>{{ form.gtin.label_tag }} {{ form.gtin }}</div>
-            <div>{{ form.fci_number.label_tag }} {{ form.fci_number }}</div>
-            <div>{{ form.clone_from_parent.label_tag }} {{ form.clone_from_parent }}</div>
-            <div>{{ form.free_shipping.label_tag }} {{ form.free_shipping }}</div>
+            <div>{{ form.ncm.label_tag }} {{ form.ncm }}{% if form.ncm.errors %}<div class="field-error">{{ form.ncm.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.cest.label_tag }} {{ form.cest }}{% if form.cest.errors %}<div class="field-error">{{ form.cest.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.ipi_fixed.label_tag }} {{ form.ipi_fixed }}{% if form.ipi_fixed.errors %}<div class="field-error">{{ form.ipi_fixed.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.icms_st_base_retencao.label_tag }} {{ form.icms_st_base_retencao }}{% if form.icms_st_base_retencao.errors %}<div class="field-error">{{ form.icms_st_base_retencao.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.icms_st_valor_retencao.label_tag }} {{ form.icms_st_valor_retencao }}{% if form.icms_st_valor_retencao.errors %}<div class="field-error">{{ form.icms_st_valor_retencao.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.icms_proprio_substituto.label_tag }} {{ form.icms_proprio_substituto }}{% if form.icms_proprio_substituto.errors %}<div class="field-error">{{ form.icms_proprio_substituto.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.gtin.label_tag }} {{ form.gtin }}{% if form.gtin.errors %}<div class="field-error">{{ form.gtin.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.fci_number.label_tag }} {{ form.fci_number }}{% if form.fci_number.errors %}<div class="field-error">{{ form.fci_number.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.clone_from_parent.label_tag }} {{ form.clone_from_parent }}{% if form.clone_from_parent.errors %}<div class="field-error">{{ form.clone_from_parent.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.free_shipping.label_tag }} {{ form.free_shipping }}{% if form.free_shipping.errors %}<div class="field-error">{{ form.free_shipping.errors.0 }}</div>{% endif %}</div>
 
-            <div>{{ form.width_cm.label_tag }} {{ form.width_cm }}</div>
-            <div>{{ form.height_cm.label_tag }} {{ form.height_cm }}</div>
-            <div>{{ form.length_cm.label_tag }} {{ form.length_cm }}</div>
-            <div>{{ form.weight_net.label_tag }} {{ form.weight_net }}</div>
-            <div>{{ form.weight_gross.label_tag }} {{ form.weight_gross }}</div>
+            <div>{{ form.width_cm.label_tag }} {{ form.width_cm }}{% if form.width_cm.errors %}<div class="field-error">{{ form.width_cm.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.height_cm.label_tag }} {{ form.height_cm }}{% if form.height_cm.errors %}<div class="field-error">{{ form.height_cm.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.length_cm.label_tag }} {{ form.length_cm }}{% if form.length_cm.errors %}<div class="field-error">{{ form.length_cm.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.weight_net.label_tag }} {{ form.weight_net }}{% if form.weight_net.errors %}<div class="field-error">{{ form.weight_net.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.weight_gross.label_tag }} {{ form.weight_gross }}{% if form.weight_gross.errors %}<div class="field-error">{{ form.weight_gross.errors.0 }}</div>{% endif %}</div>
 
-            <div>{{ form.product_category.label_tag }} {{ form.product_category }}</div>
-            <div>{{ form.department.label_tag }} {{ form.department }}</div>
-            <div>{{ form.brand.label_tag }} {{ form.brand }}</div>
-            <div>{{ form.unit_of_measure.label_tag }} {{ form.unit_of_measure }}</div>
+            <div>{{ form.product_category.label_tag }} {{ form.product_category }}{% if form.product_category.errors %}<div class="field-error">{{ form.product_category.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.department.label_tag }} {{ form.department }}{% if form.department.errors %}<div class="field-error">{{ form.department.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.brand.label_tag }} {{ form.brand }}{% if form.brand.errors %}<div class="field-error">{{ form.brand.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.unit_of_measure.label_tag }} {{ form.unit_of_measure }}{% if form.unit_of_measure.errors %}<div class="field-error">{{ form.unit_of_measure.errors.0 }}</div>{% endif %}</div>
 
-            {# mantém bling_extra como TextArea oculto p/ legado #}
             <div style="display:none">{{ form.bling_extra }}</div>
           </div>
 
@@ -196,10 +217,6 @@
         <!-- MANUFATURA -->
         <section class="tab-panel" role="tabpanel" data-tab="manufatura">
           <div class="grid">
-            <!-- Cada campo abaixo vira combobox com busca (texto + hidden id).
-                 Mantém o input do form (texto), adiciona um hidden *_id e o wrapper data-combo+data-role.
-                 A view pode consumir os *_id no POST se desejar. -->
-
             <div>
               <label for="id_m_corte">Corte:</label>
               <div data-combo data-role="CORTE"
@@ -207,6 +224,7 @@
                    data-hid="#id_m_corte_id"></div>
               <input type="hidden" name="m_corte_id" id="id_m_corte_id" class="input">
               {{ form.m_corte }}
+              {% if form.m_corte.errors %}<div class="field-error">{{ form.m_corte.errors.0 }}</div>{% endif %}
             </div>
 
             <div>
@@ -216,6 +234,7 @@
                    data-hid="#id_m_costura_id"></div>
               <input type="hidden" name="m_costura_id" id="id_m_costura_id" class="input">
               {{ form.m_costura }}
+              {% if form.m_costura.errors %}<div class="field-error">{{ form.m_costura.errors.0 }}</div>{% endif %}
             </div>
 
             <div>
@@ -225,6 +244,7 @@
                    data-hid="#id_m_estamparia_id"></div>
               <input type="hidden" name="m_estamparia_id" id="id_m_estamparia_id" class="input">
               {{ form.m_estamparia }}
+              {% if form.m_estamparia.errors %}<div class="field-error">{{ form.m_estamparia.errors.0 }}</div>{% endif %}
             </div>
 
             <div>
@@ -234,6 +254,7 @@
                    data-hid="#id_m_bordado_id"></div>
               <input type="hidden" name="m_bordado_id" id="id_m_bordado_id" class="input">
               {{ form.m_bordado }}
+              {% if form.m_bordado.errors %}<div class="field-error">{{ form.m_bordado.errors.0 }}</div>{% endif %}
             </div>
 
             <div>
@@ -243,6 +264,7 @@
                    data-hid="#id_m_lavanderia_id"></div>
               <input type="hidden" name="m_lavanderia_id" id="id_m_lavanderia_id" class="input">
               {{ form.m_lavanderia }}
+              {% if form.m_lavanderia.errors %}<div class="field-error">{{ form.m_lavanderia.errors.0 }}</div>{% endif %}
             </div>
 
             <div>
@@ -252,6 +274,7 @@
                    data-hid="#id_m_acabamento_id"></div>
               <input type="hidden" name="m_acabamento_id" id="id_m_acabamento_id" class="input">
               {{ form.m_acabamento }}
+              {% if form.m_acabamento.errors %}<div class="field-error">{{ form.m_acabamento.errors.0 }}</div>{% endif %}
             </div>
           </div>
 
@@ -270,11 +293,11 @@
         <!-- MATERIAL -->
         <section class="tab-panel" role="tabpanel" data-tab="material" hidden>
           <div class="grid">
-            <div>{{ form.os_estilo.label_tag }} {{ form.os_estilo }}</div>
-            <div>{{ form.os_arte.label_tag }} {{ form.os_arte }}</div>
-            <div>{{ form.os_modelagem.label_tag }} {{ form.os_modelagem }}</div>
-            <div>{{ form.os_pilotagem.label_tag }} {{ form.os_pilotagem }}</div>
-            <div>{{ form.os_encaixe.label_tag }} {{ form.os_encaixe }}</div>
+            <div>{{ form.os_estilo.label_tag }} {{ form.os_estilo }}{% if form.os_estilo.errors %}<div class="field-error">{{ form.os_estilo.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.os_arte.label_tag }} {{ form.os_arte }}{% if form.os_arte.errors %}<div class="field-error">{{ form.os_arte.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.os_modelagem.label_tag }} {{ form.os_modelagem }}{% if form.os_modelagem.errors %}<div class="field-error">{{ form.os_modelagem.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.os_pilotagem.label_tag }} {{ form.os_pilotagem }}{% if form.os_pilotagem.errors %}<div class="field-error">{{ form.os_pilotagem.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.os_encaixe.label_tag }} {{ form.os_encaixe }}{% if form.os_encaixe.errors %}<div class="field-error">{{ form.os_encaixe.errors.0 }}</div>{% endif %}</div>
           </div>
         </section>
 
@@ -289,7 +312,10 @@
         <!-- AVIAMENTOS OFICINA -->
         <section class="tab-panel" role="tabpanel" data-tab="av-oficina" hidden>
           <div class="grid">
-            <div class="col-span-2">{{ form.av_oficina_linha_1.label_tag }} {{ form.av_oficina_linha_1 }}</div>
+            <div class="col-span-2">
+              {{ form.av_oficina_linha_1.label_tag }} {{ form.av_oficina_linha_1 }}
+              {% if form.av_oficina_linha_1.errors %}<div class="field-error">{{ form.av_oficina_linha_1.errors.0 }}</div>{% endif %}
+            </div>
           </div>
           <div class="mt-3">
             <a class="dynamic-add" data-add="#av-oficina-list" data-template="#tpl-av-oficina-row">+ inserir campo</a>
@@ -306,8 +332,8 @@
         <!-- AVIAMENTOS ACABAMENTO -->
         <section class="tab-panel" role="tabpanel" data-tab="av-acab" hidden>
           <div class="grid">
-            <div>{{ form.avacab_sacola.label_tag }} {{ form.avacab_sacola }}</div>
-            <div>{{ form.avacab_tag.label_tag }} {{ form.avacab_tag }}</div>
+            <div>{{ form.avacab_sacola.label_tag }} {{ form.avacab_sacola }}{% if form.avacab_sacola.errors %}<div class="field-error">{{ form.avacab_sacola.errors.0 }}</div>{% endif %}</div>
+            <div>{{ form.avacab_tag.label_tag }} {{ form.avacab_tag }}{% if form.avacab_tag.errors %}<div class="field-error">{{ form.avacab_tag.errors.0 }}</div>{% endif %}</div>
           </div>
         </section>
       </div>
@@ -323,6 +349,5 @@
 <link rel="stylesheet" href="{% static 'crontex/css/catalog.css' %}">
 <link rel="stylesheet" href="{% static 'crontex/css/grades_variations.css' %}">
 <script src="{% static 'crontex/js/produto_form_full.js' %}"></script>
-{# Conector de pessoas (front) — usa /people/api/search e /people/api/get #}
 <script src="{% static 'crontex/js/people_optionlist.js' %}?v=3"></script>
 {% endblock %}

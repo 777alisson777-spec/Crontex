@@ -10,19 +10,26 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 
 from catalog.models import Product
 from catalog.forms import ProductForm
 from django.forms import BaseModelForm
+from catalog.services.import_produtos import import_bling_csv
 
 # NOVO: merge idempotente dos vínculos de pessoas em bling_extra["people"]
 from catalog.services.people_links import merge_people_links
+
+# NOVO: logger centralizado (evita prints/gambiarras)
+from crontex.logger import step, info, warn, err
+from catalog.services.ai_pipeline import run_ai_for_product
+
 
 
 # -----------------------------
@@ -30,9 +37,6 @@ from catalog.services.people_links import merge_people_links
 # -----------------------------
 
 def _loads_json_safe(obj: Any) -> Dict[str, Any]:
-    """
-    Converte obj em dict de forma tolerante (str JSON, dict ou None).
-    """
     if not obj:
         return {}
     if isinstance(obj, dict):
@@ -48,9 +52,6 @@ def _as_dict(obj: Any) -> Dict[str, Any]:
 
 
 def _dset(d: Dict[str, Any], path: List[str], value: Any) -> None:
-    """
-    Define 'value' em d[path[0]][path[1]]... criando dicts intermediários.
-    """
     cur = d
     for key in path[:-1]:
         if key not in cur or not isinstance(cur.get(key), dict):
@@ -64,11 +65,6 @@ def _dset(d: Dict[str, Any], path: List[str], value: Any) -> None:
 # -----------------------------
 
 def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
-    """
-    Coleta abas não-model do form para guardar em bling_extra (visual/legado).
-    Atenção: vínculos de PESSOAS (IDs) são tratados pelo service merge_people_links().
-    Aqui só armazenamos os rótulos/textos das abas (quando fizer sentido) e outros campos.
-    """
     cd = form.cleaned_data
 
     # ============ PEDIDO ============
@@ -115,7 +111,6 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
     }
 
     # ============ GRADE ============
-    # Já validada/normalizada no form; aqui mantemos a string JSON (ou "{}")
     grade_payload = cd.get("grade_payload") or "{}"
 
     return {
@@ -130,14 +125,10 @@ def _collect_extras_from_form(form: ProductForm) -> Dict[str, Any]:
 
 
 # -----------------------------
-# Merge + geração de SKUs (mantém comportamento, com robustez extra)
+# Merge + geração de SKUs
 # -----------------------------
 
 def _merge_extras(base: Dict[str, Any], inc: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Merge raso e seguro: não apaga chaves ausentes no incremento.
-    Mantém 'grade' como string JSON vinda do form.
-    """
     out = dict(base or {})
     for k, v in (inc or {}).items():
         if k == "grade" and isinstance(v, str):
@@ -148,11 +139,6 @@ def _merge_extras(base: Dict[str, Any], inc: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _normalize_grade_values(values: List[Any]) -> List[str]:
-    """
-    Normaliza cada item da lista de 'valores' de um parâmetro da grade.
-    Aceita itens dicts (label/code) ou strings já normalizadas.
-    Retorna lista de sufixos legíveis, priorizando 'code' > 'label' > str(item).
-    """
     out: List[str] = []
     for v in values:
         if isinstance(v, dict):
@@ -165,10 +151,6 @@ def _normalize_grade_values(values: List[Any]) -> List[str]:
 
 
 def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """
-    Gera grade_skus/grade_skus_meta a partir de bling_extra.grade (string JSON).
-    Reaproveita payload já salvo pelo form (ProductForm.save()).
-    """
     extras = _loads_json_safe(product.bling_extra)
     grade_raw = extras.get("grade") or "{}"
     try:
@@ -180,7 +162,6 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
     if not isinstance(params, list) or not params:
         return [], {"params": [], "count": 0}
 
-    # Normaliza lista de listas (uma por parâmetro com valores)
     values_lists: List[List[str]] = []
     for prm in params:
         vals = prm.get("valores") or []
@@ -190,7 +171,6 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
     if not values_lists:
         return [], {"params": params, "count": 0}
 
-    # Produto cartesiano simples
     combos: List[List[str]] = [[]]
     for lst in values_lists:
         combos = [c + [v] for c in combos for v in lst]
@@ -208,24 +188,16 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
 
 
 def _merge_and_generate_skus(product: Product, form: ProductForm) -> None:
-    """
-    Atualiza bling_extra com tabs do form, mescla vínculos de pessoas
-    e preenche grade_skus/grade_skus_meta.
-    """
     current = _loads_json_safe(product.bling_extra)
     inc = _collect_extras_from_form(form)
 
-    # Mescla abas (texto/valores simples)
     merged = _merge_extras(current, inc)
 
-    # Mescla IDs de pessoas em merged["people"] de forma idempotente
-    product.bling_extra = merged  # passa estado atual para o service operar
+    product.bling_extra = merged
     merge_people_links(product, form.cleaned_data)
 
-    # Gera grade_skus com base no que ficou em bling_extra["grade"]
     grade_items, meta = _generate_grade_skus(product, form)
 
-    # Grava de volta
     extra = _loads_json_safe(product.bling_extra)
     extra["grade_skus"] = grade_items
     extra["grade_skus_meta"] = meta
@@ -234,9 +206,6 @@ def _merge_and_generate_skus(product: Product, form: ProductForm) -> None:
 
 
 def _inject_executante(product: Product, request: HttpRequest) -> None:
-    """
-    Injeta dados do executante atual (request.user) dentro de bling_extra["pedido"].
-    """
     current = _loads_json_safe(getattr(product, "bling_extra", {}))
     pedido = _loads_json_safe(current.get("pedido"))
 
@@ -269,7 +238,6 @@ class ProdutoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         qs = super().get_queryset().order_by("-id")
         q = (self.request.GET.get("q") or "").strip()
         if q:
-            # MAIS ROBUSTO: usa Q combinando name|sku e preserva ordenação
             qs = qs.filter(Q(name__icontains=q) | Q(sku__icontains=q))
         return qs
 
@@ -286,7 +254,6 @@ class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
         extras = _loads_json_safe(getattr(obj, "bling_extra", {}))
         ctx["extras"] = extras
 
-        # Abas
         ctx["tab_pedido"] = extras.get("pedido", {})
         ctx["tab_os"] = extras.get("os", {})
         ctx["tab_manufatura"] = extras.get("manufatura", {})
@@ -308,11 +275,19 @@ class ProdutoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     template_name = "catalog/produto_form.html"
 
     @transaction.atomic
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+    def form_valid(self, form):
         resp = super().form_valid(form)
-        obj: Product = cast(Product, form.instance)
+        obj = form.instance
         _inject_executante(obj, self.request)
-        _merge_and_generate_skus(obj, cast(ProductForm, form))
+        _merge_and_generate_skus(obj, form)
+
+        desenho = self.request.FILES.get("os_desenho_tecnico")
+        artes   = self.request.FILES.get("os_artes")
+        try:
+            run_ai_for_product(obj, desenho, artes)
+        except Exception:
+            pass
+
         messages.success(self.request, _("Produto salvo com sucesso."))
         return resp
 
@@ -325,11 +300,20 @@ class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     template_name = "catalog/produto_form.html"
 
     @transaction.atomic
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+    @transaction.atomic
+    def form_valid(self, form):
         resp = super().form_valid(form)
-        obj: Product = cast(Product, form.instance)
+        obj = form.instance
         _inject_executante(obj, self.request)
-        _merge_and_generate_skus(obj, cast(ProductForm, form))
+        _merge_and_generate_skus(obj, form)
+
+        desenho = self.request.FILES.get("os_desenho_tecnico")
+        artes   = self.request.FILES.get("os_artes")
+        try:
+            run_ai_for_product(obj, desenho, artes)
+        except Exception:
+            pass
+
         messages.success(self.request, _("Produto salvo com sucesso."))
         return resp
 
@@ -355,8 +339,36 @@ class ProdutoImportView(LoginRequiredMixin, PermissionRequiredMixin, FormMixin, 
 
 @require_GET
 def collaborator_search_legacy(request: HttpRequest) -> JsonResponse:
-    """
-    Endpoint legado mantido para compat (caso algum template antigo ainda aponte aqui).
-    Recomendação: usar /people/api/search/ (app people) com o nosso front atual.
-    """
     return JsonResponse({"items": []})
+
+
+@login_required
+def importar_produtos(request):
+    with step("catalog.import.csv", method=request.method):
+        if request.method != "POST":
+            info("non-POST import hit; redirecting")
+            return redirect(reverse("catalog:produto_list"))
+
+        f = request.FILES.get("arquivo")
+        if not f:
+            warn("no-file")
+            messages.error(request, "Selecione um arquivo CSV.")
+            return redirect(reverse("catalog:produto_list"))
+
+        try:
+            with step("catalog.import.run", filename=getattr(f, "name", None), size=getattr(f, "size", None)):
+                result = import_bling_csv(f)
+        except Exception as e:
+            err("import-failed", error=e)
+            messages.error(request, f"Falha ao ler CSV: {e}")
+            return redirect(reverse("catalog:produto_list"))
+
+        msg = (
+            f"Importação finalizada — criados: {result.created}, "
+            f"atualizados: {result.updated}, pulados: {result.skipped}."
+        )
+        messages.success(request, msg)
+        for e in (result.errors or [])[:3]:
+            messages.warning(request, e)
+
+        return redirect(reverse("catalog:produto_list"))
