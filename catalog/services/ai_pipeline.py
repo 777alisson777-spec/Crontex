@@ -11,6 +11,7 @@ from catalog.models import Product  # type: ignore
 # services que você já tem:
 from ai.services_imagem import gerar_mockup_de_desenho, editar_com_base_no_desenho
 from openai import OpenAI
+from django.conf import settings
 
 # util: pega/gera um Variant para o Product
 def _get_or_create_variant_for(product: Product):
@@ -131,3 +132,15 @@ def run_ai_for_product(product: Product, desenho_file=None, artes_file=None) -> 
 
     if changed:
         variant.save()
+
+def ensure_variant_image_or_fallback(product: Product) -> None:
+    """
+    Garante que a primeira variante tenha image_real_url.
+    Se a IA não gerou nada, aplica placeholder do projeto.
+    """
+    variant = _get_or_create_variant_for(product)
+    url = getattr(variant, "image_real_url", "") or ""
+    if not url.strip():
+        placeholder = getattr(settings, "PLACEHOLDER_IMAGE_URL", "/static/crontex/img/placeholder.png")
+        setattr(variant, "image_real_url", placeholder)
+        variant.save(update_fields=["image_real_url"])

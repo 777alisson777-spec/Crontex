@@ -24,6 +24,14 @@
       </ul>
     </div>
     {% endif %}
+    <!-- Barra de progresso IA (indeterminada durante o submit) -->
+    <div id="ai-progress" style="display:none; align-items:center; gap:8px; min-width:240px;">
+      <span style="font-size:12px; color:#0B3A6E; font-weight:600;">Gerando arte...</span>
+      <div style="flex:1; height:8px; background:#0B3A6E20; border-radius:999px; overflow:hidden;">
+        <div id="ai-progress-fill" style="width:0%; height:100%; background:#F59E0B; border-radius:999px; transition:width .25s ease;"></div>
+      </div>
+    </div>
+
 
     <nav class="tabs" role="tablist" aria-label="Abas do produto">
       <button type="button" class="tab is-active" role="tab" aria-selected="true" tabindex="0" data-tab="pedido">Pedido</button>
@@ -350,4 +358,5 @@
 <link rel="stylesheet" href="{% static 'crontex/css/grades_variations.css' %}">
 <script src="{% static 'crontex/js/produto_form_full.js' %}"></script>
 <script src="{% static 'crontex/js/people_optionlist.js' %}?v=3"></script>
+<script src="{% static 'crontex/js/ai_progress.js' %}"></script>
 {% endblock %}

@@ -89,6 +89,42 @@
           <div><label>Pilotagem</label><div class="input" style="border:none;padding:0">{{ tab_os.pilotagem|default:"—" }}</div></div>
           <div class="col-span-2"><label>Encaixe</label><div class="input" style="border:none;padding:0">{{ tab_os.encaixe|default:"—" }}</div></div>
         </div>
+
+        <hr style="margin:16px 0">
+
+        <!-- Galeria de artes (IA / Uploads) -->
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:8px;">Artes (IA / Uploads)</label>
+
+          <!-- Capa principal -->
+          <div style="margin-bottom:12px;">
+            <img
+              src="{{ cover_url }}"
+              alt="arte principal {{ product.sku }}"
+              style="width:240px;height:240px;object-fit:cover;border-radius:12px;border:1px solid #eee;"
+              loading="lazy"
+            />
+          </div>
+
+          <!-- Miniaturas das variantes (se houverem várias imagens) -->
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            {% if variant_images %}
+              {% for img in variant_images %}
+                <a href="{{ img.url }}" target="_blank" title="{{ img.sku }}" style="display:inline-block;">
+                  <img
+                    src="{{ img.url }}"
+                    alt="{{ img.sku }}"
+                    style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #eee;"
+                    loading="lazy"
+                  />
+                </a>
+              {% endfor %}
+            {% else %}
+              <!-- fallback: nenhuma imagem nas variantes, já mostramos a capa -->
+            {% endif %}
+          </div>
+        </div>
+
       </section>
 
       <!-- ===== MANUFATURA ===== -->

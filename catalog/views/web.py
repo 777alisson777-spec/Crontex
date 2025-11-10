@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy, reverse
@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 
-from catalog.models import Product
+from catalog.models import Product, ProductVariant
 from catalog.forms import ProductForm
 from django.forms import BaseModelForm
 from catalog.services.import_produtos import import_bling_csv
@@ -28,7 +28,8 @@ from catalog.services.people_links import merge_people_links
 
 # NOVO: logger centralizado (evita prints/gambiarras)
 from crontex.logger import step, info, warn, err
-from catalog.services.ai_pipeline import run_ai_for_product
+from catalog.services.ai_pipeline import run_ai_for_product, ensure_variant_image_or_fallback
+
 
 
 
@@ -187,16 +188,19 @@ def _generate_grade_skus(product: Product, form: ProductForm) -> Tuple[List[Dict
     return items, meta
 
 
-def _merge_and_generate_skus(product: Product, form: ProductForm) -> None:
+def _merge_and_generate_skus(product: Product, form: BaseModelForm) -> None:
+    # em runtime é ProductForm; para o type-checker fazemos cast
+    form_typed = cast(ProductForm, form)
+
     current = _loads_json_safe(product.bling_extra)
-    inc = _collect_extras_from_form(form)
+    inc = _collect_extras_from_form(form_typed)
 
     merged = _merge_extras(current, inc)
 
     product.bling_extra = merged
-    merge_people_links(product, form.cleaned_data)
+    merge_people_links(product, form_typed.cleaned_data)
 
-    grade_items, meta = _generate_grade_skus(product, form)
+    grade_items, meta = _generate_grade_skus(product, form_typed)
 
     extra = _loads_json_safe(product.bling_extra)
     extra["grade_skus"] = grade_items
@@ -224,6 +228,23 @@ def _inject_executante(product: Product, request: HttpRequest) -> None:
 
 
 # -----------------------------
+# Thumbnails: util para imagem principal
+# -----------------------------
+
+def _primary_image_url_for(product: Product) -> str:
+    """
+    Seleciona a melhor imagem para o produto:
+    1) primeira variante com image_real_url preenchido
+    2) placeholder estático
+    """
+    for v in getattr(product, "variants").all():
+        url = getattr(v, "image_real_url", "") or ""
+        if url.strip():
+            return url
+    return "/static/crontex/img/placeholder.png"
+
+
+# -----------------------------
 # Views
 # -----------------------------
 
@@ -235,11 +256,44 @@ class ProdutoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        qs = super().get_queryset().order_by("-id")
+        qs = (
+            super()
+            .get_queryset()
+            .only("id", "sku", "name", "price", "stock_qty", "product_category")
+            .prefetch_related(
+                Prefetch(
+                    "variants",
+                    queryset=ProductVariant.objects.only(
+                        "id", "product_id", "sku", "image_real_url"
+                    ),
+                )
+            )
+            .order_by("-id")
+        )
         q = (self.request.GET.get("q") or "").strip()
         if q:
             qs = qs.filter(Q(name__icontains=q) | Q(sku__icontains=q))
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        produtos = ctx.get("produtos") or []
+        # payload adicional para thumbnails direto no template
+        items = []
+        for p in produtos:
+            items.append(
+                {
+                    "id": p.id,
+                    "sku": p.sku,
+                    "name": p.name,
+                    "price": p.price,
+                    "stock_qty": p.stock_qty,
+                    "product_category": p.product_category,
+                    "image_url": _primary_image_url_for(p),
+                }
+            )
+        ctx["items"] = items
+        return ctx
 
 
 class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -264,6 +318,15 @@ class ProdutoDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
         ctx["tab_grade_skus"] = extras.get("grade_skus", [])
         ctx["tab_grade_skus_meta"] = extras.get("grade_skus_meta", {})
 
+        # imagens de variantes para galeria (se existirem)
+        variant_images = [
+            {"sku": v.sku, "url": v.image_real_url}
+            for v in obj.variants.all()
+            if (getattr(v, "image_real_url", "") or "").strip()
+        ]
+        ctx["cover_url"] = _primary_image_url_for(obj)
+        ctx["variant_images"] = variant_images
+
         return ctx
 
 
@@ -285,6 +348,7 @@ class ProdutoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         artes   = self.request.FILES.get("os_artes")
         try:
             run_ai_for_product(obj, desenho, artes)
+            ensure_variant_image_or_fallback(obj)
         except Exception:
             pass
 
@@ -300,7 +364,6 @@ class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     template_name = "catalog/produto_form.html"
 
     @transaction.atomic
-    @transaction.atomic
     def form_valid(self, form):
         resp = super().form_valid(form)
         obj = form.instance
@@ -311,6 +374,7 @@ class ProdutoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         artes   = self.request.FILES.get("os_artes")
         try:
             run_ai_for_product(obj, desenho, artes)
+            ensure_variant_image_or_fallback(obj)
         except Exception:
             pass
 
